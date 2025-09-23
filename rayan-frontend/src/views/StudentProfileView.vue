@@ -484,6 +484,7 @@ const noteColumns = [
       <div v-if="selectedMedal" class="medal-modal-content">
         <i :class="selectedMedal.icon" class="modal-medal-icon"></i>
         <h3>{{ selectedMedal.name }}</h3>
+        <p class="medal-description">{{ selectedMedal.description }}</p>
         <div class="form-group">
           <label>توضیحات (اختیاری)</label>
           <textarea rows="4" placeholder="دلیل خود را برای این اقدام بنویسید..."></textarea>
@@ -741,12 +742,24 @@ const noteColumns = [
 }
 .medal-modal-content h3 {
   font-size: 1.5rem;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* کاهش فاصله پایینی */
 }
 .medal-modal-content .form-group {
   text-align: right;
   margin-bottom: 20px;
 }
+/* ==== تغییر جدید ==== */
+.medal-description {
+  background-color: var(--background-color);
+  padding: 10px 15px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  text-align: justify;
+}
+/* =================== */
 
 /* استایل‌های کلی */
 .card {
