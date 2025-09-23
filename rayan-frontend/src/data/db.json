@@ -1728,33 +1728,9 @@
     }
   ],
   "groups": [
-    {
-      "id": "g1",
-      "groupNumber": "G-101",
-      "termId": "t74",
-      "apollonyarId": "ap1",
-      "studentCount": 12
-    },
-    {
-      "id": "g2",
-      "groupNumber": "G-201",
-      "termId": "t76",
-      "apollonyarId": "ap3",
-      "studentCount": 15
-    },
-    {
-      "id": "g3",
-      "groupNumber": "G-301",
-      "termId": "t78",
-      "apollonyarId": "ap2",
-      "studentCount": 18
-    },
-    {
-      "id": "g4",
-      "groupNumber": "G-401",
-      "termId": "t81",
-      "apollonyarId": "ap4",
-      "studentCount": 10
-    }
+    { "id": "g1", "name": "G-101", "termId": "t74", "apollonyarId": "ap1", "studentCount": 12 },
+    { "id": "g2", "name": "G-201", "termId": "t76", "apollonyarId": "ap3", "studentCount": 15 },
+    { "id": "g3", "name": "G-301", "termId": "t78", "apollonyarId": "ap2", "studentCount": 18 },
+    { "id": "g4", "name": "G-401", "termId": "t81", "apollonyarId": "ap4", "studentCount": 10 }
   ]
 }
