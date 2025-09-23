@@ -19,19 +19,15 @@ const router = useRouter();
 const studentId = parseInt(route.params.id);
 const student = computed(() => dataStore.getStudentById(studentId));
 
-// ۱. افزودن متغیرهای وضعیت برای مودال مدال
+// --- Medals Modal ---
 const isMedalModalOpen = ref(false);
 const selectedMedal = ref(null);
-const isAwardingMedal = ref(true); // برای تشخیص اعطا یا حذف
-
-// ۲. تابع برای مدیریت کلیک روی مدال
+const isAwardingMedal = ref(true);
 function handleMedalClick(medal) {
   selectedMedal.value = medal;
   isAwardingMedal.value = !student.value.earnedMedalIds.includes(medal.id);
   isMedalModalOpen.value = true;
 }
-
-// ۳. تابع برای ثبت نهایی تغییرات مدال
 function submitMedalAction() {
   if (isAwardingMedal.value) {
     dataStore.addMedalToStudent(studentId, selectedMedal.value.id);
@@ -42,6 +38,59 @@ function submitMedalAction() {
   selectedMedal.value = null;
 }
 
+// --- Change Term Modal ---
+const isChangeTermModalOpen = ref(false);
+const previousTermChangesCount = ref(0);
+const termsInSameCourse = computed(() => {
+  if (!student.value || !student.value.courseId) return [];
+  return dataStore.terms.filter(term => term.courseId === student.value.courseId);
+});
+function openChangeTermModal() {
+  previousTermChangesCount.value = student.value.actionLogs.filter(log => log.action === 'تغییر ترم').length;
+  isChangeTermModalOpen.value = true;
+}
+function submitChangeTerm() {
+  console.log('Term Changed!');
+  isChangeTermModalOpen.value = false;
+}
+
+// --- Edit Apollonyar Modal ---
+const isEditApollonyarModalOpen = ref(false);
+const allApollonyars = computed(() => dataStore.apollonyars);
+function openEditApollonyarModal() {
+  isEditApollonyarModalOpen.value = true;
+}
+function submitApollonyarChange() {
+  console.log('Apollonyar Changed!');
+  isEditApollonyarModalOpen.value = false;
+}
+
+// --- Edit Student Type Modal ---
+const isEditTypeModalOpen = ref(false);
+const selectedType = ref('');
+function openEditTypeModal() {
+  selectedType.value = student.value.studentType;
+  isEditTypeModalOpen.value = true;
+}
+function submitTypeChange() {
+  console.log('Type Changed!');
+  isEditTypeModalOpen.value = false;
+}
+
+// --- Edit Student Status Modal ---
+const isEditStatusModalOpen = ref(false);
+const selectedStatus = ref('');
+function openEditStatusModal() {
+  selectedStatus.value = student.value.status;
+  isEditStatusModalOpen.value = true;
+}
+function submitStatusChange() {
+  console.log('Status Changed!');
+  isEditStatusModalOpen.value = false;
+}
+
+
+// --- Other computed properties and functions ---
 const studentCalls = computed(() => {
     if (!student.value || !course.value) return [];
     return dataStore.getCallsForStudentProfile(studentId, course.value.id);
@@ -137,11 +186,11 @@ const noteColumns = [
         </div>
          <div class="stats-grid-container">
           <div class="stat-card card">
-            <div class="card-title"><h4>نوع</h4><button class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
+            <div class="card-title"><h4>نوع</h4><button @click="openEditTypeModal" class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
             <p><span class="status-bubble type">{{ student.studentType }}</span></p>
           </div>
           <div class="stat-card card">
-            <div class="card-title"><h4>وضعیت</h4><button class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
+            <div class="card-title"><h4>وضعیت</h4><button @click="openEditStatusModal" class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
             <p><span class="status-bubble" :class="`status-${student.status}`">{{ student.status }}</span></p>
           </div>
           <div class="stat-card card">
@@ -154,7 +203,7 @@ const noteColumns = [
           </div>
           
           <div class="stat-card card">
-            <div class="card-title"><h4>ترم</h4><button class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
+            <div class="card-title"><h4>ترم</h4><button @click="openChangeTermModal" class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
             <p>{{ student.term }}</p>
             <small class="term-dates">
               <i class="fa-solid fa-calendar-alt"></i>
@@ -162,7 +211,7 @@ const noteColumns = [
             </small>
           </div>
           <div class="stat-card card">
-            <div class="card-title"><h4>آپولون‌یار</h4><button class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
+            <div class="card-title"><h4>آپولون‌یار</h4><button @click="openEditApollonyarModal" class="btn-icon"><i class="fa-solid fa-pen"></i></button></div>
             <p>{{ student.apollonyar }}</p>
           </div>
           <div class="stat-card card">
@@ -317,35 +366,94 @@ const noteColumns = [
         <button type="submit" class="btn" >ثبت</button>
       </form>
     </BaseModal>
+
+    <BaseModal :show="isChangeTermModalOpen" @close="isChangeTermModalOpen = false">
+      <template #header><h2>تغییر ترم</h2></template>
+      <div v-if="student">
+        <div class="modal-info-box">
+          <span>ترم فعلی: <strong>{{ student.term }}</strong></span>
+          <span>تغییرات قبلی: <strong>{{ previousTermChangesCount }}</strong> بار</span>
+        </div>
+        <form @submit.prevent="submitChangeTerm" class="modal-form">
+          <div class="form-group">
+            <label for="term-select">ترم جدید</label>
+            <select id="term-select" :value="student.termId">
+              <option v-for="term in termsInSameCourse" :key="term.id" :value="term.id">{{ term.name }}</option>
+            </select>
+          </div>
+          <div class="form-group"><label for="change-term-notes">توضیحات</label><textarea id="change-term-notes" rows="4" placeholder="دلیل تغییر ترم را بنویسید..."></textarea></div>
+          <button type="submit" class="btn">ثبت</button>
+        </form>
+      </div>
+    </BaseModal>
+
+    <BaseModal :show="isEditApollonyarModalOpen" @close="isEditApollonyarModalOpen = false">
+      <template #header><h2>ویرایش آپولون‌یار</h2></template>
+      <div v-if="student">
+        <div class="modal-info-box"><span>آپولون‌یار فعلی: <strong>{{ student.apollonyar }}</strong></span></div>
+        <form @submit.prevent="submitApollonyarChange" class="modal-form">
+          <div class="form-group">
+            <label for="apollonyar-select">آپولون‌یار جدید</label>
+            <select id="apollonyar-select" :value="student.apollonyarId">
+              <option v-for="ap in allApollonyars" :key="ap.id" :value="ap.id">{{ ap.name }}</option>
+            </select>
+          </div>
+          <div class="form-group"><label for="apollonyar-notes">توضیحات</label><textarea id="apollonyar-notes" rows="4"></textarea></div>
+          <button type="submit" class="btn">ثبت</button>
+        </form>
+      </div>
+    </BaseModal>
+
+    <BaseModal :show="isEditTypeModalOpen" @close="isEditTypeModalOpen = false">
+      <template #header><h2>ویرایش نوع</h2></template>
+      <div v-if="student">
+        <div class="modal-info-box"><span>نوع فعلی: <strong>{{ student.studentType }}</strong></span></div>
+        <form @submit.prevent="submitTypeChange" class="modal-form">
+          <div class="form-group">
+            <label>نوع جدید</label>
+            <div class="toggle-switch-2">
+              <button type="button" :class="{ active: selectedType === 'ترمی' }" @click="selectedType = 'ترمی'">ترمی</button>
+              <button type="button" :class="{ active: selectedType === 'خودخوان' }" @click="selectedType = 'خودخوان'">خودخوان</button>
+            </div>
+          </div>
+          <div class="form-group"><label for="type-notes">توضیحات</label><textarea id="type-notes" rows="4"></textarea></div>
+          <button type="submit" class="btn">ثبت</button>
+        </form>
+      </div>
+    </BaseModal>
+
+    <BaseModal :show="isEditStatusModalOpen" @close="isEditStatusModalOpen = false">
+      <template #header><h2>ویرایش وضعیت</h2></template>
+      <div v-if="student">
+        <div class="modal-info-box"><span>وضعیت فعلی: <strong>{{ student.status }}</strong></span></div>
+        <form @submit.prevent="submitStatusChange" class="modal-form">
+          <div class="form-group">
+            <label>وضعیت جدید</label>
+            <div class="toggle-switch-3">
+              <button type="button" :class="{ active: selectedStatus === 'آزاد' }" @click="selectedStatus = 'آزاد'">آزاد</button>
+              <button type="button" :class="{ active: selectedStatus === 'مسدود' }" @click="selectedStatus = 'مسدود'">مسدود</button>
+              <button type="button" :class="{ active: selectedStatus === 'انصراف' }" @click="selectedStatus = 'انصراف'">انصراف</button>
+            </div>
+          </div>
+          <div class="form-group"><label for="status-notes">توضیحات</label><textarea id="status-notes" rows="4"></textarea></div>
+          <button type="submit" class="btn">ثبت</button>
+        </form>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
 <style scoped>
-/* ۶. افزودن استایل‌های مودال مدال */
-.medal-modal-content {
-  text-align: center;
-}
-.modal-medal-icon {
-  font-size: 4rem;
-  color: var(--star-color);
-  margin-bottom: 15px;
-}
-.medal-modal-content h3 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-}
-.medal-modal-content .form-group {
-  text-align: right;
-  margin-bottom: 20px;
-}
+/* استایل‌های مودال مدال */
+.medal-modal-content { text-align: center; }
+.modal-medal-icon { font-size: 4rem; color: var(--star-color); margin-bottom: 15px; }
+.medal-modal-content h3 { font-size: 1.5rem; margin-bottom: 20px; }
+.medal-modal-content .form-group { text-align: right; margin-bottom: 20px; }
 
-/* ... (بقیه استایل‌ها بدون تغییر) ... */
+/* استایل‌های کلی */
 .card { background-color: var(--surface-color); border-radius: var(--border-radius); padding: 25px; box-shadow: var(--shadow-color) 0px 7px 29px 0px; }
 .page-header { margin-bottom: 25px; }
-.back-link {
-  color: var(--primary-color); text-decoration: none; font-weight: 500;
-  background: none; border: none; padding: 0; cursor: pointer;
-}
+.back-link { color: var(--primary-color); text-decoration: none; font-weight: 500; background: none; border: none; padding: 0; cursor: pointer; }
 .back-link i { margin-left: 8px; }
 .profile-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; }
 .profile-main { display: flex; flex-direction: column; gap: 25px; }
@@ -360,41 +468,13 @@ const noteColumns = [
 .course-selector { display: flex; align-items: center; gap: 15px; }
 .course-selector select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color); }
 .stats-grid-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-.stat-card {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-}
-.stat-card .card-title {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-secondary);
-    margin-bottom: 15px;
-}
+.stat-card { text-align: center; display: flex; flex-direction: column; }
+.stat-card .card-title { display: flex; justify-content: center; align-items: center; gap: 8px; color: var(--text-secondary); margin-bottom: 15px; }
 .stat-card .btn-icon { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 2px 4px; border-radius: 4px; font-size: 0.8rem; }
-.stat-card p {
-    font-size: 1rem;
-    font-weight: 500;
-    margin: 0;
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.stat-card .term-dates {
-    font-size: 0.75rem; color: var(--text-secondary); background-color: var(--background-color);
-    padding: 4px 8px; border-radius: 12px; margin-top: 10px; white-space: nowrap;
-}
+.stat-card p { font-size: 1rem; font-weight: 500; margin: 0; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+.stat-card .term-dates { font-size: 0.75rem; color: var(--text-secondary); background-color: var(--background-color); padding: 4px 8px; border-radius: 12px; margin-top: 10px; white-space: nowrap; }
 .stat-card .term-dates i { margin-left: 5px; }
-.status-bubble {
-    padding: 6px 14px;
-    border-radius: 99px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    white-space: nowrap;
-}
+.status-bubble { padding: 6px 14px; border-radius: 99px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
 .status-bubble.type { background-color: #e0e7ff; color: #3730a3; }
 .status-bubble.status-آزاد { background-color: var(--success-bg); color: var(--success-text); }
 .status-bubble.status-انصراف { background-color: #e5e7eb; color: #374151; }
@@ -402,25 +482,17 @@ const noteColumns = [
 .status-bubble.presence { background-color: #f3e8ff; color: #6b21a8; }
 .status-bubble.access-active { background-color: var(--success-bg); color: var(--success-text); }
 .status-bubble.access-inactive { background-color: #ffedd5; color: #9a3412; }
-.icon-value-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  flex-grow: 1;
-}
+.icon-value-wrapper { display: flex; justify-content: center; align-items: center; gap: 5px; flex-grow: 1; }
 .icon-value-wrapper p { font-size: 1.2rem; font-weight: 700; }
 .score-icon { color: var(--star-color); }
 .progress-section h4 { margin-bottom: 15px; }
-.progress-bar-container { width: 100%; height: 20px; background-color: var(--background-color); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
-.progress-bar { height: 100%; background-color: var(--primary-color); border-radius: 10px; }
-.btn {border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Vazirmatn', sans-serif;}
+.btn { border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Vazirmatn', sans-serif; }
 .btn-icon { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 1rem; }
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 5px; }
-.form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color); font-family: 'Vazirmatn', sans-serif;}
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); }
+.form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color); font-family: 'Vazirmatn', sans-serif; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.btn-sm {border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.btn-sm { border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .btn-icon-only { width: 32px; height: 32px; padding: 0; font-size: 1rem; }
 .status-badge { padding: 4px 12px; border-radius: 99px; font-size: 11px; white-space: nowrap; }
 .status-badge.checked { background-color: var(--success-bg); color: var(--success-text); }
@@ -428,62 +500,29 @@ const noteColumns = [
 .status-badge.not-submitted { background-color: #e5e7eb; color: #374151; }
 .grade-failed { background-color: #fee2e2; color: #b91c1c; }
 .star-rating { color: var(--star-color); white-space: nowrap; }
-:deep(.overdue-row td) {
-    background-color: #fff1f2 !important;
-}
-[data-theme="dark"] :deep(.overdue-row td) {
-    background-color: #3f2226 !important;
-}
-.modal-body-content {
-    display: flex;
-    flex-direction: column;
-}
-.submissions-wrapper { 
-  max-height: 60vh; 
-  overflow-y: auto; 
-  padding: 5px 15px 5px 5px;
-  margin: 0 -15px 0 -5px;
-}
-.evaluation-footer { 
-  border-top: 1px solid var(--border-color); 
-  padding-top: 20px; 
-  margin-top: 20px; 
-  text-align: center; 
-}
-.btn-icon-only:disabled {
-  background-color: var(--border-color);
-  color: var(--text-secondary);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-.due-date-cell {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-.profile-name-header .btn-icon:hover,
-.stat-card .btn-icon:hover,
-.due-date-cell .btn-icon:hover {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-.progress-header h4 {
-  margin-bottom: 0;
-}
-.total-progress-text {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
+:deep(.overdue-row td) { background-color: #fff1f2 !important; }
+[data-theme="dark"] :deep(.overdue-row td) { background-color: #3f2226 !important; }
+.modal-body-content { display: flex; flex-direction: column; }
+.submissions-wrapper { max-height: 60vh; overflow-y: auto; padding: 5px 15px 5px 5px; margin: 0 -15px 0 -5px; }
+.evaluation-footer { border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px; text-align: center; }
+.btn-icon-only:disabled { background-color: var(--border-color); color: var(--text-secondary); cursor: not-allowed; opacity: 0.6; }
+.due-date-cell { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.profile-name-header .btn-icon:hover, .stat-card .btn-icon:hover, .due-date-cell .btn-icon:hover { background-color: var(--primary-color); color: #fff; }
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.progress-header h4 { margin-bottom: 0; }
+.total-progress-text { color: var(--text-secondary); font-weight: 500; }
 .status-badge.call-status-موفق { background-color: var(--success-bg); color: var(--success-text); }
-.status-badge.call-status-بی‌پاسخ { background-color: #ffedd5; color: #9a3412; } /* Orange */
-.status-badge.call-status-در-آینده { background-color: #e5e7eb; color: #374151; } /* Gray */
-.status-badge.call-status-برای-انجام { background-color: #fef9c3; color: #854d0e; } /* Yellow */
-.status-badge.call-status-سوخته { background-color: #fee2e2; color: #b91c1c; } /* Red */
+.status-badge.call-status-بی‌پاسخ { background-color: #ffedd5; color: #9a3412; }
+.status-badge.call-status-در-آینده { background-color: #e5e7eb; color: #374151; }
+.status-badge.call-status-برای-انجام { background-color: #fef9c3; color: #854d0e; }
+.status-badge.call-status-سوخته { background-color: #fee2e2; color: #b91c1c; }
+
+/* استایل‌های مودال‌های جدید */
+.modal-info-box { display: flex; justify-content: space-between; background-color: var(--background-color); padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid var(--border-color); }
+.modal-info-box span { font-size: 0.95rem; color: var(--text-secondary); }
+
+/* استایل Toggle Switch */
+.toggle-switch-2, .toggle-switch-3 { display: flex; background-color: var(--background-color); border-radius: 8px; padding: 4px; border: 1px solid var(--border-color); }
+.toggle-switch-2 button, .toggle-switch-3 button { flex: 1; padding: 8px; border: none; background-color: transparent; cursor: pointer; border-radius: 6px; transition: background-color 0.2s, color 0.2s; font-family: 'Vazirmatn', sans-serif; }
+.toggle-switch-2 button.active, .toggle-switch-3 button.active { background-color: var(--primary-color); color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 </style>
