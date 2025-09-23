@@ -1,5 +1,4 @@
 <script setup>
-// ۱. افزودن پراپ size با مقدار پیش‌فرض 'md' (متوسط)
 defineProps({
   show: {
     type: Boolean,
@@ -40,7 +39,7 @@ const emit = defineEmits(['close'])
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 5000;
 }
 .modal-content {
   background-color: var(--surface-color);
@@ -48,8 +47,11 @@ const emit = defineEmits(['close'])
   border-radius: var(--border-radius);
   width: 90%;
   box-shadow: var(--shadow-color) 0px 7px 29px 0px;
+  display: flex; /* برای کنترل بهتر ارتفاع */
+  flex-direction: column; /* چیدمان عمودی */
+  max-height: 90vh; /* حداکثر ارتفاع مودال */
 }
-/* ۳. تعریف اندازه‌های مختلف برای مودال */
+/* تعریف اندازه‌های مختلف برای مودال */
 .modal-content.modal-md {
   max-width: 500px; /* اندازه پیش‌فرض */
 }
@@ -66,6 +68,12 @@ const emit = defineEmits(['close'])
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 15px;
   margin-bottom: 20px;
+  flex-shrink: 0; /* جلوگیری از کوچک شدن هدر */
+}
+.modal-body {
+  overflow-y: auto; /* افزودن اسکرول در صورت نیاز */
+  padding-right: 10px; /* فاصله برای اسکرول‌بار */
+  margin-right: -10px; /* جبران فاصله */
 }
 .close-button {
   background: none;
