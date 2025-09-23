@@ -130,11 +130,8 @@ export const useDataStore = defineStore('data', () => {
 
   const apollonyarsForTable = computed(() => {
     return apollonyars.value.map((apollonyar) => {
-      const urgentCalls = calls.value.filter(
-        (c) => c.apollonyarId === apollonyar.id && c.callStatus === 'برای انجام',
-      ).length
       const avgScore = (Math.random() * (5 - 3) + 3).toFixed(1)
-      return { ...apollonyar, urgentCalls, avgScore }
+      return { ...apollonyar, avgScore }
     })
   })
 
@@ -234,7 +231,6 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  // ==== تابع جدید برای افزودن یادداشت ====
   function addNoteToStudent(studentId, noteText) {
     const student = students.value.find((s) => s.id === studentId)
     if (student && noteText.trim()) {
@@ -242,12 +238,12 @@ export const useDataStore = defineStore('data', () => {
         student.notes = []
       }
       const newNote = {
-        id: `n${Date.now()}`, // ساخت یک آیدی منحصر به فرد
+        id: `n${Date.now()}`,
         date: dayjs().locale('fa').format('YYYY/MM/DD'),
         note: noteText.trim(),
-        author: 'علی رضایی', // نام کاربر فعلی
+        author: 'علی رضایی',
       }
-      student.notes.unshift(newNote) // افزودن به ابتدای آرایه
+      student.notes.unshift(newNote)
     }
   }
 
@@ -302,7 +298,7 @@ export const useDataStore = defineStore('data', () => {
     addMedalToStudent,
     removeMedalFromStudent,
     removeNoteFromStudent,
-    addNoteToStudent, // اکسپورت تابع جدید
+    addNoteToStudent,
     getCallsForStudentProfile,
   }
 })
