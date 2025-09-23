@@ -308,8 +308,14 @@ const studentTableColumns = [
 }
 .upload-btn {
   height: 40px;
-  padding: 0 16px;
+  padding: 0 16px !important;
   cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px;
+  line-height: 1 !important;
+  vertical-align: middle !important;
 }
 
 .modal-actions {
