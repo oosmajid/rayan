@@ -89,6 +89,16 @@ function submitStatusChange() {
   isEditStatusModalOpen.value = false;
 }
 
+// --- Edit Profile Modal ---
+const isEditProfileModalOpen = ref(false);
+function openEditProfileModal() {
+  isEditProfileModalOpen.value = true;
+}
+function submitProfileEdit() {
+  console.log('Profile Edited!');
+  isEditProfileModalOpen.value = false;
+}
+
 
 // --- Other computed properties and functions ---
 const studentCalls = computed(() => {
@@ -163,7 +173,7 @@ const noteColumns = [
           </div>
           <div class="profile-name-header">
             <h2 class="profile-name">{{ student.name }}</h2>
-            <button class="btn-icon"><i class="fa-solid fa-pen"></i></button>
+            <button @click="openEditProfileModal" class="btn-icon"><i class="fa-solid fa-pen"></i></button>
           </div>
           <ul class="profile-details">
             <li><i class="fa-solid fa-mobile-screen-button"></i> <span>{{ student.phone }}</span></li>
@@ -440,6 +450,39 @@ const noteColumns = [
         </form>
       </div>
     </BaseModal>
+
+    <BaseModal :show="isEditProfileModalOpen" @close="isEditProfileModalOpen = false">
+      <template #header><h2>ویرایش مشخصات هنرجو</h2></template>
+      <div v-if="student">
+        <form @submit.prevent="submitProfileEdit" class="modal-form profile-edit-form">
+          <div class="form-group profile-image-editor">
+            <img src="https://picsum.photos/120/120" alt="عکس هنرجو">
+            <label for="profile-image-upload" class="edit-photo-btn">
+              <i class="fa-solid fa-camera"></i>
+              <input type="file" id="profile-image-upload" hidden>
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="profile-name">نام و نام خانوادگی</label>
+            <input type="text" id="profile-name" :value="student.name">
+          </div>
+          <div class="form-group">
+            <label for="profile-phone">شماره تلفن</label>
+            <input type="tel" id="profile-phone" :value="student.phone">
+          </div>
+          <div class="form-group">
+            <label for="profile-birth-year">سال تولد</label>
+            <input type="number" id="profile-birth-year" value="1378">
+          </div>
+          <div class="form-group">
+            <label for="profile-city">شهر</label>
+            <input type="text" id="profile-city" value="تهران">
+          </div>
+          <button type="submit" class="btn">ثبت تغییرات</button>
+        </form>
+      </div>
+    </BaseModal>
+
   </div>
 </template>
 
@@ -490,7 +533,7 @@ const noteColumns = [
 .btn-icon { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 1rem; }
 .form-group { margin-bottom: 20px; }
 .form-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); }
-.form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color); font-family: 'Vazirmatn', sans-serif; }
+.form-group select, .form-group textarea, .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color); font-family: 'Vazirmatn', sans-serif; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .btn-sm { border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .btn-icon-only { width: 32px; height: 32px; padding: 0; font-size: 1rem; }
@@ -525,4 +568,38 @@ const noteColumns = [
 .toggle-switch-2, .toggle-switch-3 { display: flex; background-color: var(--background-color); border-radius: 8px; padding: 4px; border: 1px solid var(--border-color); }
 .toggle-switch-2 button, .toggle-switch-3 button { flex: 1; padding: 8px; border: none; background-color: transparent; cursor: pointer; border-radius: 6px; transition: background-color 0.2s, color 0.2s; font-family: 'Vazirmatn', sans-serif; }
 .toggle-switch-2 button.active, .toggle-switch-3 button.active { background-color: var(--primary-color); color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+/* استایل مودال ویرایش پروفایل */
+.profile-edit-form { text-align: center; }
+.profile-image-editor { position: relative; width: 120px; height: 120px; margin: 0 auto 20px; }
+.profile-image-editor img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); }
+.edit-photo-btn {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 36px;
+  height: 36px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: background-color 0.2s;
+  padding: 0;
+}
+.edit-photo-btn:hover { background-color: var(--primary-hover); }
+.edit-photo-btn i {
+  color: #fff;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+}
+.profile-edit-form .form-group { text-align: right; }
+
 </style>
