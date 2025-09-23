@@ -172,7 +172,32 @@ function submitDueDateChange() {
   isEditDueDateModalOpen.value = false
 }
 
-// ۴. تابع toEnglishDigits حذف شد چون دیگر به آن نیازی نیست
+// --- Log Call Modal ---
+const showLogCallModal = ref(false)
+const newCallData = ref({
+  topic: '',
+  description: '',
+  isUnanswered: false,
+})
+
+const callTopics = computed(() => {
+  if (!course.value || !course.value.callsDef) return []
+  const courseCalls = course.value.callsDef.map((c) => c.topic)
+  return [...courseCalls, 'تماس انصراف', 'تماس پیگیری قسط', 'سایر']
+})
+
+function openLogCallModal() {
+  newCallData.value = {
+    topic: callTopics.value[0] || '',
+    description: '',
+    isUnanswered: false,
+  }
+  showLogCallModal.value = true
+}
+function submitLogCall() {
+  console.log('New Call Logged:', newCallData.value)
+  showLogCallModal.value = false
+}
 
 // --- Other computed properties and functions ---
 const studentCalls = computed(() => {
@@ -210,7 +235,7 @@ function openEvaluationModal(assignment) {
 function submitEvaluation() {
   isModalOpen.value = false
 }
-const showLogCallModal = ref(false)
+
 const progressPercent = computed(() => {
   if (!student.value || !student.value.totalWatchTime) return 0
   return (student.value.watchTime / student.value.totalWatchTime) * 100
@@ -270,7 +295,7 @@ const noteColumns = [
             <li><i class="fa-solid fa-location-dot"></i> <span>تهران</span></li>
           </ul>
           <div class="sidebar-actions">
-            <button @click="showLogCallModal = true" class="btn">
+            <button @click="openLogCallModal" class="btn">
               <i class="fa-solid fa-phone"></i> ثبت تماس
             </button>
           </div>
@@ -441,7 +466,9 @@ const noteColumns = [
         <div class="card">
           <div class="card-header">
             <h4>تماس‌ها</h4>
-            <button class="btn-sm"><i class="fa-solid fa-phone"></i> ثبت تماس جدید</button>
+            <button @click="openLogCallModal" class="btn-sm">
+              <i class="fa-solid fa-phone"></i> ثبت تماس جدید
+            </button>
           </div>
           <BaseTable :columns="callColumns" :data="studentCalls || []" :rows-per-page="10">
             <template #cell-callStatus="{ item }">
@@ -513,14 +540,23 @@ const noteColumns = [
     </BaseModal>
     <BaseModal :show="showLogCallModal" @close="showLogCallModal = false">
       <template #header><h2>ثبت تماس</h2></template>
-      <form @submit.prevent>
+      <form @submit.prevent="submitLogCall" class="modal-form">
         <div class="form-group">
-          <label>عنوان تماس</label
-          ><select>
-            <option>تماس اول</option>
+          <label for="call-topic">عنوان تماس</label>
+          <select id="call-topic" v-model="newCallData.topic">
+            <option v-for="topic in callTopics" :key="topic" :value="topic">
+              {{ topic }}
+            </option>
           </select>
         </div>
-        <div class="form-group"><label>توضیحات</label><textarea rows="4"></textarea></div>
+        <div class="form-group">
+          <label for="call-description">توضیحات</label>
+          <textarea id="call-description" v-model="newCallData.description" rows="4"></textarea>
+        </div>
+        <div class="form-group-checkbox">
+          <input type="checkbox" id="call-unanswered" v-model="newCallData.isUnanswered" />
+          <label for="call-unanswered">تماس بی‌پاسخ بود</label>
+        </div>
         <button type="submit" class="btn">ثبت</button>
       </form>
     </BaseModal>
@@ -972,6 +1008,15 @@ const noteColumns = [
 }
 .form-group {
   margin-bottom: 20px;
+}
+.form-group-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.form-group-checkbox label {
+  cursor: pointer;
 }
 .form-group label {
   display: block;
