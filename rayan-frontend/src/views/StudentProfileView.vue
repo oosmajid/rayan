@@ -126,13 +126,10 @@ function openEditDueDateModal(assignment) {
         '۹': '9',
       }
       const normalizedDate = String(assignment.dueDate).replace(/[۰-۹]/g, (d) => persianMap[d])
-
       const parsedDate = dayjs(normalizedDate, 'YYYY/MM/DD', 'fa')
-
       if (parsedDate.isValid()) {
         newDueDate.value = parsedDate.format('YYYY-MM-DD')
       } else {
-        console.warn('Invalid Jalali date format:', assignment.dueDate)
         newDueDate.value = ''
       }
     } catch (e) {
@@ -190,6 +187,18 @@ function confirmDeleteNote() {
   }
   isDeleteNoteModalOpen.value = false
   noteToDelete.value = null
+}
+
+// --- Add Note Modal ---
+const isAddNoteModalOpen = ref(false)
+const newNoteText = ref('')
+function openAddNoteModal() {
+  newNoteText.value = ''
+  isAddNoteModalOpen.value = true
+}
+function submitNewNote() {
+  dataStore.addNoteToStudent(studentId, newNoteText.value)
+  isAddNoteModalOpen.value = false
 }
 
 // --- Other computed properties and functions ---
@@ -251,7 +260,6 @@ const logColumns = [
   { key: 'dateTime', label: 'تاریخ و ساعت' },
   { key: 'author', label: 'توسط' },
 ]
-// --- جابجایی ستون actions در جدول یادداشت‌ها ---
 const noteColumns = [
   { key: 'actions', label: '', width: '60px' },
   { key: 'date', label: 'تاریخ' },
@@ -495,7 +503,9 @@ const noteColumns = [
         <div class="card">
           <div class="card-header">
             <h4>یادداشت‌ها</h4>
-            <button class="btn-sm"><i class="fa-solid fa-file-text"></i> افزودن یادداشت</button>
+            <button @click="openAddNoteModal" class="btn-sm">
+              <i class="fa-solid fa-plus"></i> افزودن یادداشت
+            </button>
           </div>
           <BaseTable :columns="noteColumns" :data="student.notes || []" :rows-per-page="5">
             <template #cell-actions="{ item }">
@@ -526,7 +536,9 @@ const noteColumns = [
           <label>توضیحات (اختیاری)</label>
           <textarea rows="4" placeholder="دلیل خود را برای این اقدام بنویسید..."></textarea>
         </div>
-        <button @click="submitMedalAction" class="btn">ثبت</button>
+        <button @click="submitMedalAction" class="btn" :class="{ 'btn-danger': !isAwardingMedal }">
+          {{ isAwardingMedal ? 'ثبت' : 'حذف مدال' }}
+        </button>
       </div>
     </BaseModal>
     <BaseModal :show="isModalOpen" @close="isModalOpen = false" size="lg">
@@ -582,6 +594,18 @@ const noteColumns = [
         <button @click="isDeleteNoteModalOpen = false" class="btn-outline">انصراف</button>
         <button @click="confirmDeleteNote" class="btn btn-danger">حذف</button>
       </div>
+    </BaseModal>
+    <BaseModal :show="isAddNoteModalOpen" @close="isAddNoteModalOpen = false">
+      <template #header>
+        <h2>افزودن یادداشت</h2>
+      </template>
+      <form @submit.prevent="submitNewNote" class="modal-form">
+        <div class="form-group">
+          <label for="new-note-text">متن یادداشت</label>
+          <textarea id="new-note-text" v-model="newNoteText" rows="4" required></textarea>
+        </div>
+        <button type="submit" class="btn">ثبت</button>
+      </form>
     </BaseModal>
     <BaseModal :show="isChangeTermModalOpen" @close="isChangeTermModalOpen = false">
       <template #header><h2>تغییر ترم</h2></template>
@@ -1315,15 +1339,6 @@ const noteColumns = [
   background: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  /* Make outline buttons comfortably padded and centered */
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 1rem;
 }
 .btn-outline:hover {
   background-color: var(--background-color);

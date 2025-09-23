@@ -42,7 +42,7 @@ export const useDataStore = defineStore('data', () => {
         termStartDate: term.startDate,
         termEndDate: term.endDate,
         course: course.name || '-',
-        courseId: course.id, // ۱. افزودن آیدی دوره برای استفاده در پروفایل
+        courseId: course.id,
         apollonyar: apollonyar.name || '-',
         assignmentStatus: generateAssignmentStatuses(),
         daysSinceLastContact: lastCall ? Math.floor(Math.random() * 10) + 1 : 30,
@@ -224,7 +224,6 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  // ==== تابع جدید برای حذف یادداشت ====
   function removeNoteFromStudent(studentId, noteId) {
     const student = students.value.find((s) => s.id === studentId)
     if (student && student.notes) {
@@ -232,6 +231,23 @@ export const useDataStore = defineStore('data', () => {
       if (index > -1) {
         student.notes.splice(index, 1)
       }
+    }
+  }
+
+  // ==== تابع جدید برای افزودن یادداشت ====
+  function addNoteToStudent(studentId, noteText) {
+    const student = students.value.find((s) => s.id === studentId)
+    if (student && noteText.trim()) {
+      if (!student.notes) {
+        student.notes = []
+      }
+      const newNote = {
+        id: `n${Date.now()}`, // ساخت یک آیدی منحصر به فرد
+        date: dayjs().locale('fa').format('YYYY/MM/DD'),
+        note: noteText.trim(),
+        author: 'علی رضایی', // نام کاربر فعلی
+      }
+      student.notes.unshift(newNote) // افزودن به ابتدای آرایه
     }
   }
 
@@ -252,7 +268,7 @@ export const useDataStore = defineStore('data', () => {
           ...(loggedCall || {}),
           callStatus: loggedCall ? loggedCall.callStatus : 'در آینده',
           apollonyar: apollonyar ? apollonyar.name : '-',
-          description: loggedCall ? loggedCall.description : '', // افزودن توضیحات
+          description: loggedCall ? loggedCall.description : '',
         }
       })
     }
@@ -285,7 +301,8 @@ export const useDataStore = defineStore('data', () => {
     addTransactionNote,
     addMedalToStudent,
     removeMedalFromStudent,
-    removeNoteFromStudent, // اکسپورت تابع جدید
+    removeNoteFromStudent,
+    addNoteToStudent, // اکسپورت تابع جدید
     getCallsForStudentProfile,
   }
 })
