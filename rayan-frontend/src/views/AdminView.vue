@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import AdminCoursesTab from '@/components/AdminCoursesTab.vue'
 import AdminTermsTab from '@/components/AdminTermsTab.vue'
-import AdminStudentsTab from '@/components/AdminStudentsTab.vue'
+// import AdminStudentsTab from '@/components/AdminStudentsTab.vue' // حذف شد
 import AdminApollonyarsTab from '@/components/AdminApollonyarsTab.vue'
 import AdminGroupsTab from '@/components/AdminGroupsTab.vue'
 import AdminMedalsTab from '@/components/AdminMedalsTab.vue'
@@ -51,13 +51,6 @@ function setActiveTab(tabName) {
         <i class="fa-solid fa-users-rectangle"></i> گروه‌ها
       </button>
       <button
-        @click="setActiveTab('students')"
-        :class="{ active: activeTab === 'students' }"
-        class="tab-button"
-      >
-        <i class="fa-solid fa-user-graduate"></i> هنرجویان
-      </button>
-      <button
         @click="setActiveTab('medals')"
         :class="{ active: activeTab === 'medals' }"
         class="tab-button"
@@ -71,7 +64,6 @@ function setActiveTab(tabName) {
       <div v-if="activeTab === 'terms'"><AdminTermsTab /></div>
       <div v-if="activeTab === 'apollonyars'"><AdminApollonyarsTab /></div>
       <div v-if="activeTab === 'groups'"><AdminGroupsTab /></div>
-      <div v-if="activeTab === 'students'"><AdminStudentsTab /></div>
       <div v-if="activeTab === 'medals'"><AdminMedalsTab /></div>
     </div>
   </div>
