@@ -12,7 +12,6 @@ import DetailedProgressBar from '@/components/DetailedProgressBar.vue'
 import dayjs from 'dayjs'
 import jalali from 'dayjs-jalali'
 
-// ۱. پلاگین جلالی را فعال کرده و زبان را روی فارسی تنظیم کنید
 dayjs.extend(jalali)
 dayjs.locale('fa')
 
@@ -111,13 +110,9 @@ const isEditDueDateModalOpen = ref(false)
 const selectedAssignmentForDueDate = ref(null)
 const newDueDate = ref('')
 function openEditDueDateModal(assignment) {
-  console.log('openEditDueDateModal called with assignment:', assignment)
   selectedAssignmentForDueDate.value = assignment
-
   if (assignment && assignment.dueDate) {
-    // ۲. تاریخ جلالی را مستقیماً به آبجکت dayjs تبدیل می‌کنیم
     try {
-      // Normalize Persian digits to English digits (if any)
       const persianMap = {
         '۰': '0',
         '۱': '1',
@@ -130,41 +125,23 @@ function openEditDueDateModal(assignment) {
         '۸': '8',
         '۹': '9',
       }
-      const normalizeDigits = (s) => String(s).replace(/[۰-۹]/g, (d) => persianMap[d] ?? d)
-      let dateStr = normalizeDigits(assignment.dueDate).trim()
+      const normalizedDate = String(assignment.dueDate).replace(/[۰-۹]/g, (d) => persianMap[d])
 
-      // Try parsing as ISO / Gregorian first
-      let parsed = dayjs(dateStr)
-      // If not valid, try common separators and formats
-      if (!parsed.isValid()) {
-        // Try swapping slashes/backslashes to dashes
-        const alt = dateStr.replace(/\//g, '-').replace(/\\/g, '-')
-        parsed = dayjs(alt)
-      }
-      // If still invalid, try explicit YYYY-MM-DD or YYYY/MM/DD format
-      if (!parsed.isValid()) {
-        parsed = dayjs(dateStr, 'YYYY-MM-DD')
-      }
-      if (!parsed.isValid()) {
-        parsed = dayjs(dateStr, 'YYYY/MM/DD')
-      }
+      const parsedDate = dayjs(normalizedDate, 'YYYY/MM/DD', 'fa')
 
-      if (parsed.isValid()) {
-        newDueDate.value = parsed.format('YYYY-MM-DD')
+      if (parsedDate.isValid()) {
+        newDueDate.value = parsedDate.format('YYYY-MM-DD')
       } else {
-        // Fallback to empty string so input stays blank but modal still opens
-        console.warn('Unable to parse assignment.dueDate:', assignment.dueDate)
+        console.warn('Invalid Jalali date format:', assignment.dueDate)
         newDueDate.value = ''
       }
-    } catch (err) {
-      // Ensure any unexpected error does not prevent the modal from opening
-      console.error('Error while parsing due date:', err)
+    } catch (e) {
+      console.error('Error parsing date: ', e)
       newDueDate.value = ''
     }
   } else {
     newDueDate.value = ''
   }
-
   isEditDueDateModalOpen.value = true
 }
 function submitDueDateChange() {
@@ -174,24 +151,14 @@ function submitDueDateChange() {
 
 // --- Log Call Modal ---
 const showLogCallModal = ref(false)
-const newCallData = ref({
-  topic: '',
-  description: '',
-  isUnanswered: false,
-})
-
+const newCallData = ref({ topic: '', description: '', isUnanswered: false })
 const callTopics = computed(() => {
   if (!course.value || !course.value.callsDef) return []
   const courseCalls = course.value.callsDef.map((c) => c.topic)
   return [...courseCalls, 'تماس انصراف', 'تماس پیگیری قسط', 'سایر']
 })
-
 function openLogCallModal() {
-  newCallData.value = {
-    topic: callTopics.value[0] || '',
-    description: '',
-    isUnanswered: false,
-  }
+  newCallData.value = { topic: callTopics.value[0] || '', description: '', isUnanswered: false }
   showLogCallModal.value = true
 }
 function submitLogCall() {
@@ -199,12 +166,37 @@ function submitLogCall() {
   showLogCallModal.value = false
 }
 
+// --- Details Modal for Calls & Logs ---
+const isDetailsModalOpen = ref(false)
+const detailsModalContent = ref({ title: '', description: '' })
+function openDetailsModal(title, description) {
+  detailsModalContent.value = {
+    title,
+    description: description || 'توضیحاتی برای این مورد ثبت نشده است.',
+  }
+  isDetailsModalOpen.value = true
+}
+
+// --- Delete Note Modal ---
+const isDeleteNoteModalOpen = ref(false)
+const noteToDelete = ref(null)
+function openDeleteNoteModal(note) {
+  noteToDelete.value = note
+  isDeleteNoteModalOpen.value = true
+}
+function confirmDeleteNote() {
+  if (noteToDelete.value) {
+    dataStore.removeNoteFromStudent(studentId, noteToDelete.value.id)
+  }
+  isDeleteNoteModalOpen.value = false
+  noteToDelete.value = null
+}
+
 // --- Other computed properties and functions ---
 const studentCalls = computed(() => {
   if (!student.value || !course.value) return []
   return dataStore.getCallsForStudentProfile(studentId, course.value.id)
 })
-
 const course = computed(() => {
   if (!student.value) return null
   return dataStore.courses.find((c) => c.id === student.value.courseId)
@@ -213,7 +205,6 @@ const studentAssignments = computed(() => {
   if (!student.value) return []
   return dataStore.getAssignmentsForStudentProfile(studentId, student.value.courseId)
 })
-
 watchEffect(() => {
   if (student.value) {
     layoutStore.setPageTitle(`پروفایل: ${student.value.name}`)
@@ -235,7 +226,6 @@ function openEvaluationModal(assignment) {
 function submitEvaluation() {
   isModalOpen.value = false
 }
-
 const progressPercent = computed(() => {
   if (!student.value || !student.value.totalWatchTime) return 0
   return (student.value.watchTime / student.value.totalWatchTime) * 100
@@ -261,7 +251,9 @@ const logColumns = [
   { key: 'dateTime', label: 'تاریخ و ساعت' },
   { key: 'author', label: 'توسط' },
 ]
+// --- جابجایی ستون actions در جدول یادداشت‌ها ---
 const noteColumns = [
+  { key: 'actions', label: '', width: '60px' },
   { key: 'date', label: 'تاریخ' },
   { key: 'note', label: 'یادداشت' },
   { key: 'author', label: 'نویسنده' },
@@ -353,7 +345,6 @@ const noteColumns = [
               >
             </p>
           </div>
-
           <div class="stat-card card">
             <div class="card-title">
               <h4>ترم</h4>
@@ -471,23 +462,31 @@ const noteColumns = [
             </button>
           </div>
           <BaseTable :columns="callColumns" :data="studentCalls || []" :rows-per-page="10">
+            <template #cell-actions="{ item }">
+              <button
+                @click="openDetailsModal('تماس: ' + item.topic, item.description)"
+                class="btn-sm btn-icon-only"
+                title="مشاهده توضیحات"
+              >
+                <i class="fa-solid fa-info-circle"></i>
+              </button>
+            </template>
             <template #cell-callStatus="{ item }">
               <span class="status-badge" :class="`call-status-${item.callStatus}`">
                 {{ item.callStatus }}
               </span>
-            </template>
-            <template #cell-actions>
-              <button class="btn-sm btn-icon-only" title="مشاهده توضیحات">
-                <i class="fa-solid fa-info-circle"></i>
-              </button>
             </template>
           </BaseTable>
         </div>
         <div class="card">
           <div class="card-header"><h4>لاگ اقدامات</h4></div>
           <BaseTable :columns="logColumns" :data="student.actionLogs || []" :rows-per-page="5">
-            <template #cell-actions>
-              <button class="btn-sm btn-icon-only" title="مشاهده توضیحات">
+            <template #cell-actions="{ item }">
+              <button
+                @click="openDetailsModal('اقدام: ' + item.action, item.description)"
+                class="btn-sm btn-icon-only"
+                title="مشاهده توضیحات"
+              >
                 <i class="fa-solid fa-eye"></i>
               </button>
             </template>
@@ -498,12 +497,23 @@ const noteColumns = [
             <h4>یادداشت‌ها</h4>
             <button class="btn-sm"><i class="fa-solid fa-file-text"></i> افزودن یادداشت</button>
           </div>
-          <BaseTable :columns="noteColumns" :data="student.notes || []" :rows-per-page="5" />
+          <BaseTable :columns="noteColumns" :data="student.notes || []" :rows-per-page="5">
+            <template #cell-actions="{ item }">
+              <button
+                @click="openDeleteNoteModal(item)"
+                class="btn-sm btn-icon-only btn-danger"
+                title="حذف یادداشت"
+              >
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </template>
+          </BaseTable>
         </div>
       </main>
     </div>
 
     <div v-else><h2>هنرجو یافت نشد!</h2></div>
+
     <BaseModal :show="isMedalModalOpen" @close="isMedalModalOpen = false">
       <template #header>
         <h2 v-if="selectedMedal">{{ isAwardingMedal ? 'اعطای مدال' : 'حذف مدال' }}</h2>
@@ -519,7 +529,6 @@ const noteColumns = [
         <button @click="submitMedalAction" class="btn">ثبت</button>
       </div>
     </BaseModal>
-
     <BaseModal :show="isModalOpen" @close="isModalOpen = false" size="lg">
       <template #header>
         <h2>ارزیابی تکلیف: {{ student?.name }} - {{ selectedAssignment?.title }}</h2>
@@ -544,9 +553,7 @@ const noteColumns = [
         <div class="form-group">
           <label for="call-topic">عنوان تماس</label>
           <select id="call-topic" v-model="newCallData.topic">
-            <option v-for="topic in callTopics" :key="topic" :value="topic">
-              {{ topic }}
-            </option>
+            <option v-for="topic in callTopics" :key="topic" :value="topic">{{ topic }}</option>
           </select>
         </div>
         <div class="form-group">
@@ -560,7 +567,22 @@ const noteColumns = [
         <button type="submit" class="btn">ثبت</button>
       </form>
     </BaseModal>
-
+    <BaseModal :show="isDetailsModalOpen" @close="isDetailsModalOpen = false">
+      <template #header>
+        <h2>{{ detailsModalContent.title }}</h2>
+      </template>
+      <p class="details-modal-description">{{ detailsModalContent.description }}</p>
+    </BaseModal>
+    <BaseModal :show="isDeleteNoteModalOpen" @close="isDeleteNoteModalOpen = false">
+      <template #header>
+        <h2>تأیید حذف یادداشت</h2>
+      </template>
+      <p>آیا از حذف این یادداشت اطمینان دارید؟ این عمل قابل بازگشت نیست.</p>
+      <div class="modal-actions">
+        <button @click="isDeleteNoteModalOpen = false" class="btn-outline">انصراف</button>
+        <button @click="confirmDeleteNote" class="btn btn-danger">حذف</button>
+      </div>
+    </BaseModal>
     <BaseModal :show="isChangeTermModalOpen" @close="isChangeTermModalOpen = false">
       <template #header><h2>تغییر ترم</h2></template>
       <div v-if="student">
@@ -593,7 +615,6 @@ const noteColumns = [
         </form>
       </div>
     </BaseModal>
-
     <BaseModal :show="isEditApollonyarModalOpen" @close="isEditApollonyarModalOpen = false">
       <template #header><h2>ویرایش آپولون‌یار</h2></template>
       <div v-if="student">
@@ -619,7 +640,6 @@ const noteColumns = [
         </form>
       </div>
     </BaseModal>
-
     <BaseModal :show="isEditTypeModalOpen" @close="isEditTypeModalOpen = false">
       <template #header><h2>ویرایش نوع</h2></template>
       <div v-if="student">
@@ -655,7 +675,6 @@ const noteColumns = [
         </form>
       </div>
     </BaseModal>
-
     <BaseModal :show="isEditStatusModalOpen" @close="isEditStatusModalOpen = false">
       <template #header><h2>ویرایش وضعیت</h2></template>
       <div v-if="student">
@@ -699,7 +718,6 @@ const noteColumns = [
         </form>
       </div>
     </BaseModal>
-
     <BaseModal :show="isEditProfileModalOpen" @close="isEditProfileModalOpen = false">
       <template #header><h2>ویرایش مشخصات هنرجو</h2></template>
       <div v-if="student">
@@ -731,7 +749,6 @@ const noteColumns = [
         </form>
       </div>
     </BaseModal>
-
     <BaseModal :show="isEditDueDateModalOpen" @close="isEditDueDateModalOpen = false">
       <template #header><h2>ویرایش مهلت ارسال تکلیف</h2></template>
       <div v-if="selectedAssignmentForDueDate">
@@ -766,7 +783,6 @@ const noteColumns = [
 </template>
 
 <style scoped>
-/* استایل‌ها بدون تغییر باقی می‌مانند */
 /* استایل‌های مودال مدال */
 .medal-modal-content {
   text-align: center;
@@ -778,13 +794,12 @@ const noteColumns = [
 }
 .medal-modal-content h3 {
   font-size: 1.5rem;
-  margin-bottom: 10px; /* کاهش فاصله پایینی */
+  margin-bottom: 10px;
 }
 .medal-modal-content .form-group {
   text-align: right;
   margin-bottom: 20px;
 }
-/* ==== تغییر جدید ==== */
 .medal-description {
   background-color: var(--background-color);
   padding: 10px 15px;
@@ -795,7 +810,6 @@ const noteColumns = [
   margin-bottom: 20px;
   text-align: justify;
 }
-/* =================== */
 
 /* استایل‌های کلی */
 .card {
@@ -1158,8 +1172,6 @@ const noteColumns = [
   background-color: #fee2e2;
   color: #b91c1c;
 }
-
-/* استایل‌های مودال‌های جدید */
 .modal-info-box {
   display: flex;
   flex-direction: column;
@@ -1179,8 +1191,6 @@ const noteColumns = [
   font-size: 0.95rem;
   color: var(--text-secondary);
 }
-
-/* استایل Toggle Switch */
 .toggle-switch-2,
 .toggle-switch-3 {
   display: flex;
@@ -1208,8 +1218,6 @@ const noteColumns = [
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
-/* استایل مودال ویرایش پروفایل */
 .profile-edit-form {
   text-align: center;
 }
@@ -1226,7 +1234,6 @@ const noteColumns = [
   object-fit: cover;
   border: 3px solid var(--border-color);
 }
-
 .edit-photo-btn {
   position: absolute;
   bottom: 0px;
@@ -1248,11 +1255,9 @@ const noteColumns = [
   justify-content: center;
   padding: 0;
 }
-
 .edit-photo-btn:hover {
   background-color: var(--primary-hover);
 }
-
 .edit-photo-btn i {
   color: #fff;
   position: absolute;
@@ -1261,11 +1266,9 @@ const noteColumns = [
   transform: translate(-50%, -50%);
   line-height: 1;
 }
-
 .profile-edit-form .form-group {
   text-align: right;
 }
-
 .native-date-picker {
   width: 100%;
   padding: 10px;
@@ -1275,5 +1278,54 @@ const noteColumns = [
   font-family: 'Vazirmatn', sans-serif;
   color: var(--text-primary);
   text-align: right;
+}
+.details-modal-description {
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+.modal-actions .btn,
+.modal-actions .btn-outline {
+  width: auto;
+}
+.btn-danger {
+  background-color: var(--danger-color);
+  color: #fff;
+}
+.btn-danger:hover {
+  background-color: #c13a3a;
+}
+.btn-icon-only.btn-danger {
+  background-color: transparent;
+  color: var(--danger-color);
+}
+.btn-icon-only.btn-danger:hover {
+  background-color: var(--danger-color);
+  color: #fff;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  /* Make outline buttons comfortably padded and centered */
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+.btn-outline:hover {
+  background-color: var(--background-color);
 }
 </style>
