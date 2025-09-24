@@ -198,14 +198,14 @@
       "id": "ap1",
       "name": "مریم احمدی",
       "phone": "09121112233",
-      "status": "آzad",
+      "status": "آزاد",
       "telegramId": "@maryam_ahmadi"
     },
     {
       "id": "ap2",
       "name": "حسین کریمی",
       "phone": "09122223344",
-      "status": "آzad",
+      "status": "آزاد",
       "telegramId": "@hossein_karimi"
     },
     {
@@ -219,7 +219,7 @@
       "id": "ap4",
       "name": "نگار جعفری",
       "phone": "09125556677",
-      "status": "آzad",
+      "status": "آزاد",
       "telegramId": "@negar_jafari"
     }
   ],

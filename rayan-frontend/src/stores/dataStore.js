@@ -28,12 +28,14 @@ export const useDataStore = defineStore('data', () => {
   const coursesById = computed(() => new Map(courses.value.map((c) => [c.id, c])))
   const termsById = computed(() => new Map(terms.value.map((t) => [t.id, t])))
   const apollonyarsById = computed(() => new Map(apollonyars.value.map((a) => [a.id, a])))
+  const groupsById = computed(() => new Map(groups.value.map((g) => [g.id, g]))) // جدید
 
   const studentsWithDetails = computed(() => {
     return students.value.map((student) => {
       const term = termsById.value.get(student.termId) || {}
       const course = coursesById.value.get(term.courseId) || {}
       const apollonyar = apollonyarsById.value.get(student.apollonyarId) || {}
+      const group = groupsById.value.get(student.groupId) || {} // جدید
       const lastCall = calls.value.filter((c) => c.studentId === student.id).pop()
 
       return {
@@ -44,7 +46,8 @@ export const useDataStore = defineStore('data', () => {
         course: course.name || '-',
         courseId: course.id,
         apollonyar: apollonyar.name || '-',
-        apollonyarTelegramId: apollonyar.telegramId || '-', // این خط اضافه شده
+        apollonyarTelegramId: apollonyar.telegramId || '-',
+        group: group.name || '-', // جدید
         assignmentStatus: generateAssignmentStatuses(),
         daysSinceLastContact: lastCall ? Math.floor(Math.random() * 10) + 1 : 30,
         accountStatus: student.status,
@@ -271,6 +274,30 @@ export const useDataStore = defineStore('data', () => {
     }
   })
 
+  // --- توابع جدید برای تخصیص دسته‌جمعی ---
+  function assignApollonyarToStudents(studentIds, apollonyarId) {
+    students.value.forEach((student) => {
+      if (studentIds.includes(student.id)) {
+        student.apollonyarId = apollonyarId
+      }
+    })
+  }
+
+  function assignGroupToStudents(studentIds, groupId) {
+    students.value.forEach((student) => {
+      if (studentIds.includes(student.id)) {
+        student.groupId = groupId
+      }
+    })
+  }
+
+  function removeStudent(studentId) {
+    const index = students.value.findIndex((s) => s.id === studentId)
+    if (index > -1) {
+      students.value.splice(index, 1)
+    }
+  }
+
   return {
     students,
     apollonyars,
@@ -301,5 +328,8 @@ export const useDataStore = defineStore('data', () => {
     removeNoteFromStudent,
     addNoteToStudent,
     getCallsForStudentProfile,
+    assignApollonyarToStudents,
+    assignGroupToStudents,
+    removeStudent,
   }
 })
