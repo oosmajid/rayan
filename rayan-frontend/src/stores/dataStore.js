@@ -298,6 +298,40 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  function addStudent(studentData) {
+    const newId = Math.max(...students.value.map((s) => s.id)) + 1
+    const newStudent = {
+      id: newId,
+      name: studentData.name,
+      phone: studentData.phone,
+      birthYear: studentData.birthYear, // جدید
+      city: studentData.city, // جدید
+      termId: null,
+      apollonyarId: null,
+      status: 'آزاد',
+      studentType: 'ترمی',
+      accessStatus: 'فعال',
+      enrollmentStatus: 'در حین آموزش',
+      earnedMedalIds: [],
+      hearts: 3,
+      score: 0,
+      watchTime: 0,
+      totalWatchTime: 30,
+      chapterProgress: [],
+      actionLogs: [
+        {
+          id: `log${Date.now()}`,
+          action: 'هنرجو اضافه شد',
+          dateTime: dayjs().locale('fa').format('YYYY/MM/DD - HH:mm'),
+          author: 'سیستم',
+          description: 'هنرجوی جدید از طریق پنل اضافه شد.',
+        },
+      ],
+      notes: [],
+    }
+    students.value.unshift(newStudent)
+  }
+
   return {
     students,
     apollonyars,
@@ -331,5 +365,6 @@ export const useDataStore = defineStore('data', () => {
     assignApollonyarToStudents,
     assignGroupToStudents,
     removeStudent,
+    addStudent,
   }
 })
