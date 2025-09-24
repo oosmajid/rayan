@@ -374,6 +374,10 @@ const noteColumns = [
               </button>
             </div>
             <p>{{ student.apollonyar }}</p>
+            <small class="term-dates">
+              <i class="fa-brands fa-telegram"></i>
+              <span dir="ltr">{{ student.apollonyarTelegramId }}</span>
+            </small>
           </div>
           <div class="stat-card card">
             <div class="card-title"><h4>جان</h4></div>

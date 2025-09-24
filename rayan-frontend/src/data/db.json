@@ -194,10 +194,34 @@
     }
   ],
   "apollonyars": [
-    { "id": "ap1", "name": "مریم احمدی", "phone": "09121112233", "status": "آزاد" },
-    { "id": "ap2", "name": "حسین کریمی", "phone": "09122223344", "status": "آزاد" },
-    { "id": "ap3", "name": "فاطمه محمدی", "phone": "09124445566", "status": "مسدود" },
-    { "id": "ap4", "name": "نگار جعفری", "phone": "09125556677", "status": "آزاد" }
+    {
+      "id": "ap1",
+      "name": "مریم احمدی",
+      "phone": "09121112233",
+      "status": "آzad",
+      "telegramId": "@maryam_ahmadi"
+    },
+    {
+      "id": "ap2",
+      "name": "حسین کریمی",
+      "phone": "09122223344",
+      "status": "آzad",
+      "telegramId": "@hossein_karimi"
+    },
+    {
+      "id": "ap3",
+      "name": "فاطمه محمدی",
+      "phone": "09124445566",
+      "status": "مسدود",
+      "telegramId": "@fatemeh_mohammadi"
+    },
+    {
+      "id": "ap4",
+      "name": "نگار جعفری",
+      "phone": "09125556677",
+      "status": "آzad",
+      "telegramId": "@negar_jafari"
+    }
   ],
   "medals": [
     {

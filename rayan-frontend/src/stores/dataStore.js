@@ -44,6 +44,7 @@ export const useDataStore = defineStore('data', () => {
         course: course.name || '-',
         courseId: course.id,
         apollonyar: apollonyar.name || '-',
+        apollonyarTelegramId: apollonyar.telegramId || '-', // این خط اضافه شده
         assignmentStatus: generateAssignmentStatuses(),
         daysSinceLastContact: lastCall ? Math.floor(Math.random() * 10) + 1 : 30,
         accountStatus: student.status,
