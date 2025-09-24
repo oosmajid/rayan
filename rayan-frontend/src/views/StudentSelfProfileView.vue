@@ -15,6 +15,25 @@ const dataStore = useDataStore()
 const layoutStore = useLayoutStore()
 const route = useRoute()
 
+// --- جدید: منطق نمایش Alert Bar ---
+const alertInfo = computed(() => {
+  if (!student.value) return { show: false, reason: '' }
+
+  const status = student.value.status
+  const accessStatus = student.value.accessStatus
+
+  let reason = ''
+  if (status === 'مسدود') reason = 'وضعیت مسدود'
+  else if (status === 'انصراف') reason = 'انصراف شما از دوره'
+  else if (accessStatus === 'غیرفعال (بدهی)') reason = 'بدهی مالی'
+  else if (accessStatus === 'غیرفعال (تکلیف)') reason = 'عدم ارسال به موقع تکلیف'
+
+  return {
+    show: !!reason,
+    reason: reason,
+  }
+})
+
 const studentId = parseInt(route.params.id)
 const student = computed(() => dataStore.getStudentById(studentId))
 const course = computed(() => {
@@ -132,6 +151,14 @@ onMounted(() => {
           <select id="course-select">
             <option :value="student.course">{{ student.course }}</option>
           </select>
+        </div>
+
+        <div v-if="alertInfo.show" class="alert-bar">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>
+            به دلیل «{{ alertInfo.reason }}» دسترسی شما به دوره محدود شده است. جهت توضیحات بیش‌تر با
+            آپولون‌یار خودتان در تماس باشید.
+          </span>
         </div>
 
         <div class="stats-grid-container">
@@ -649,5 +676,25 @@ onMounted(() => {
   margin-top: 25px;
   padding-top: 20px;
   border-top: 1px solid var(--border-color);
+}
+/* استایل‌های جدید برای Alert Bar */
+.alert-bar {
+  background-color: #fee2e2; /* red-100 */
+  color: #b91c1c; /* red-700 */
+  border: 1px solid #fecaca; /* red-200 */
+  border-radius: var(--border-radius);
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.95rem;
+}
+.alert-bar i {
+  font-size: 1.2rem;
+}
+[data-theme='dark'] .alert-bar {
+  background-color: #451b1b;
+  color: #fca5a5; /* red-300 */
+  border-color: #7f1d1d;
 }
 </style>

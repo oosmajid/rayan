@@ -10,24 +10,29 @@ import AdminView from '../views/AdminView.vue'
 import TransactionsView from '../views/TransactionsView.vue'
 import InstallmentTrackingView from '../views/InstallmentTrackingView.vue'
 import DashboardView from '../views/DashboardView.vue'
-import StudentSelfProfileView from '../views/StudentSelfProfileView.vue' // جدید
+import StudentSelfProfileView from '../views/StudentSelfProfileView.vue'
+import LoginView from '../views/LoginView.vue' // جدید
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      // مسیر جدید و مستقل برای پروفایل خود هنرجو
+      // مسیر جدید برای صفحه لاگین
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+    },
+    {
       path: '/my-profile/:id',
       name: 'student-self-profile',
       component: StudentSelfProfileView,
     },
     {
-      // مسیرهای پنل ادمین و آپولون‌یار که دارای لایه اصلی هستند
       path: '/',
       component: MainLayout,
       children: [
         {
-          path: '', // صفحه اصلی
+          path: '',
           name: 'all-students',
           component: AllStudentsView,
         },
