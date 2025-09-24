@@ -344,6 +344,50 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  const getPaymentsForStudent = computed(() => {
+    return (studentId) => {
+      if (!studentId) return []
+      const allStudentInstallments = installments.value.filter((i) => i.studentId === studentId)
+      const isSinglePayment =
+        allStudentInstallments.length === 1 &&
+        allStudentInstallments[0].paymentStatus === 'پرداخت شده'
+
+      const paymentHistory = allStudentInstallments.map((i) => {
+        const isCashPayment = isSinglePayment && allStudentInstallments[0].id === i.id
+        return {
+          id: i.id,
+          amount: i.amount,
+          date: i.dueDate,
+          status: i.paymentStatus,
+          type: i.paymentStatus === 'پرداخت شده' ? 'واریز' : 'قسط',
+          method: isCashPayment ? 'نقدی (یکجا)' : 'قسطی',
+          description: isCashPayment ? 'پرداخت کامل شهریه دوره' : `قسط مربوط به تاریخ ${i.dueDate}`,
+        }
+      })
+      return paymentHistory.sort(
+        (a, b) => new Date(b.date.replace(/\//g, '-')) - new Date(a.date.replace(/\//g, '-')),
+      )
+    }
+  })
+
+  // >> تغییر: تابع برای دریافت مبلغ کل جدید بروز شد
+  function updateStudentInstallments(studentId, newInstallments, newTotalFee) {
+    // بروزرسانی مبلغ کل دوره برای هنرجو
+    const student = students.value.find((s) => s.id === studentId)
+    if (student && newTotalFee !== undefined) {
+      student.totalCourseFee = newTotalFee
+    }
+
+    // 1. حذف تمام اقساط قدیمی (پرداخت نشده) این دانشجو
+    installments.value = installments.value.filter(
+      (i) => i.studentId !== studentId || i.transactionId != null,
+    )
+
+    // 2. اضافه کردن اقساط جدید (که پرداخت نشده‌اند)
+    const unpaidNewInstallments = newInstallments.filter((i) => i.transactionId == null)
+    installments.value.push(...unpaidNewInstallments)
+  }
+
   return {
     students,
     apollonyars,
@@ -379,5 +423,7 @@ export const useDataStore = defineStore('data', () => {
     removeStudent,
     addStudent,
     updateStudentProfile,
+    getPaymentsForStudent,
+    updateStudentInstallments,
   }
 })

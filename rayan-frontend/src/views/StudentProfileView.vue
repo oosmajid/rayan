@@ -23,6 +23,115 @@ const router = useRouter()
 const studentId = parseInt(route.params.id)
 const student = computed(() => dataStore.getStudentById(studentId))
 
+// --- منطق بخش پرداخت‌ها و ویرایش اقساط ---
+const paymentHistory = computed(() => {
+  return dataStore.getPaymentsForStudent(studentId)
+})
+const isEditInstallmentsModalOpen = ref(false)
+const editableInstallments = ref([])
+const validationError = ref('')
+// >> جدید: متغیر برای نگهداری مبلغ کل قابل ویرایش
+const editableTotalCourseFee = ref(0)
+
+const totalPaid = computed(() => {
+  return dataStore.installments
+    .filter((i) => i.studentId === studentId && i.paymentStatus === 'پرداخت شده')
+    .reduce((sum, i) => sum + (Number(String(i.amount).replace(/,/g, '')) || 0), 0)
+})
+
+const totalInstallmentsAmount = computed(() => {
+  if (!editableInstallments.value) return 0
+  return editableInstallments.value.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
+})
+
+// src/views/StudentProfileView.vue
+
+function openEditInstallmentsModal() {
+  // کپی عمیق از اقساط برای ویرایش
+  editableTotalCourseFee.value = student.value.totalCourseFee || 0
+
+  editableInstallments.value = JSON.parse(
+    JSON.stringify(dataStore.installments.filter((i) => i.studentId === studentId)),
+  ).map((i) => {
+    // ۱. تبدیل اعداد فارسی در تاریخ به انگلیسی
+    const persianMap = {
+      '۰': '0',
+      '۱': '1',
+      '۲': '2',
+      '۳': '3',
+      '۴': '4',
+      '۵': '5',
+      '۶': '6',
+      '۷': '7',
+      '۸': '8',
+      '۹': '9',
+    }
+    const normalizedDate = i.dueDate
+      ? String(i.dueDate).replace(/[۰-۹]/g, (d) => persianMap[d])
+      : ''
+
+    // ۲. تبدیل تاریخ شمسی به میلادی برای نمایش در date picker
+    if (normalizedDate) {
+      const parsedDate = dayjs(normalizedDate, 'YYYY/MM/DD', 'fa')
+      // <<< این خطوط مشکل را حل می‌کنند >>>
+      // با تعیین locale به 'en'، از باگ پلاگین جلالی جلوگیری می‌کنیم
+      i.dueDate = parsedDate.isValid() ? parsedDate.locale('en').format('YYYY-MM-DD') : ''
+    } else {
+      i.dueDate = ''
+    }
+
+    // ۳. تبدیل مبلغ از رشته با کاما به عدد خالص
+    i.amount = Number(String(i.amount).replace(/,/g, '')) || 0
+
+    return i
+  })
+
+  validationError.value = ''
+  isEditInstallmentsModalOpen.value = true
+}
+
+function addInstallment() {
+  const newInstallment = {
+    id: `new_${Date.now()}`,
+    studentId: studentId,
+    dueDate: dayjs().locale('en').format('YYYY-MM-DD'),
+    amount: 0,
+    paymentStatus: 'درآینده',
+    transactionId: null,
+  }
+  editableInstallments.value = [...editableInstallments.value, newInstallment]
+}
+
+function removeInstallment(index) {
+  editableInstallments.value.splice(index, 1)
+}
+
+// src/views/StudentProfileView.vue
+
+// src/views/StudentProfileView.vue
+
+function saveInstallments() {
+  const totalCourseFee = editableTotalCourseFee.value
+  if (totalInstallmentsAmount.value !== totalCourseFee) {
+    validationError.value = `مجموع مبلغ اقساط (${totalInstallmentsAmount.value.toLocaleString('fa-IR')}) باید با کل مبلغ قابل پرداخت (${totalCourseFee.toLocaleString('fa-IR')}) برابر باشد.`
+    return
+  }
+
+  // تبدیل تاریخ میلادی به شمسی قبل از ذخیره
+  const finalInstallments = editableInstallments.value.map((i) => {
+    if (i.dueDate && i.dueDate.includes('-')) {
+      // <<< این خط مشکل را به طور کامل حل می‌کند >>>
+      // ابتدا تاریخ را به تقویم جلالی تبدیل کرده و سپس فرمت می‌کنیم
+      i.dueDate = dayjs(i.dueDate).calendar('jalali').format('YYYY/MM/DD')
+    }
+    return i
+  })
+
+  dataStore.updateStudentInstallments(studentId, finalInstallments, editableTotalCourseFee.value)
+  isEditInstallmentsModalOpen.value = false
+}
+// --- پایان منطق جدید ---
+
 // --- Medals Modal ---
 const isMedalModalOpen = ref(false)
 const selectedMedal = ref(null)
@@ -310,6 +419,33 @@ const noteColumns = [
               <i class="fa-solid fa-phone"></i> ثبت تماس
             </button>
           </div>
+        </div>
+        <div class="payments-card card">
+          <div class="payments-header">
+            <h4>پرداخت‌ها</h4>
+            <button @click="openEditInstallmentsModal" class="btn-sm btn-outline">
+              ویرایش اقساط
+            </button>
+          </div>
+          <ul v-if="paymentHistory.length" class="payment-list">
+            <li v-for="payment in paymentHistory" :key="payment.id" class="payment-item">
+              <div class="payment-info">
+                <i class="fa-solid fa-wallet payment-icon" :class="payment.type"></i>
+                <div>
+                  <span class="payment-amount"
+                    >{{ Number(payment.amount).toLocaleString('fa-IR') }} تومان</span
+                  >
+                  <small class="payment-date">{{ payment.date }} - {{ payment.method }}</small>
+                </div>
+              </div>
+              <div class="payment-status">
+                <span class="status-badge" :class="payment.status.replace(' ', '-')">{{
+                  payment.status
+                }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-data">سابقه‌ای یافت نشد.</p>
         </div>
       </aside>
       <main class="profile-main">
@@ -820,10 +956,103 @@ const noteColumns = [
         </form>
       </div>
     </BaseModal>
+    <BaseModal
+      :show="isEditInstallmentsModalOpen"
+      @close="isEditInstallmentsModalOpen = false"
+      size="lg"
+    >
+      <template #header
+        ><h2>ویرایش اقساط: {{ student?.name }}</h2></template
+      >
+      <div class="installments-modal">
+        <div class="summary-bar">
+          <div class="total-fee-editor">
+            کل مبلغ قابل پرداخت:
+            <input type="number" v-model="editableTotalCourseFee" class="total-fee-input" />
+            <span>تومان</span>
+          </div>
+          <div>
+            پرداخت شده:
+            <strong class="success-text">{{ totalPaid.toLocaleString('fa-IR') }} تومان</strong>
+          </div>
+          <div>
+            مجموع اقساط:
+            <strong :class="{ 'error-text': totalInstallmentsAmount !== editableTotalCourseFee }"
+              >{{ totalInstallmentsAmount.toLocaleString('fa-IR') }} تومان</strong
+            >
+          </div>
+        </div>
+
+        <p v-if="validationError" class="error-message">{{ validationError }}</p>
+
+        <div class="installments-list">
+          <div
+            v-for="(installment, index) in editableInstallments"
+            :key="installment.id"
+            class="installment-row"
+            :class="{ locked: installment.transactionId }"
+          >
+            <input
+              type="date"
+              v-model="installment.dueDate"
+              :disabled="installment.transactionId"
+              class="native-date-picker"
+            />
+            <input
+              type="number"
+              v-model="installment.amount"
+              :disabled="installment.transactionId"
+              placeholder="مبلغ (تومان)"
+            />
+            <span class="status-tag">{{ installment.paymentStatus }}</span>
+            <button
+              @click="removeInstallment(index)"
+              class="btn-icon-only-sm btn-danger"
+              :disabled="installment.transactionId"
+              title="حذف قسط"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="addInstallment" type="button" class="btn btn-outline">
+            <i class="fa-solid fa-plus"></i> افزودن قسط جدید
+          </button>
+          <div class="spacer"></div>
+          <button
+            @click="isEditInstallmentsModalOpen = false"
+            type="button"
+            class="btn btn-outline"
+          >
+            انصراف
+          </button>
+          <button @click="saveInstallments" type="button" class="btn">ذخیره تغییرات</button>
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
 <style scoped>
+/* >> جدید: استایل برای فیلد ورودی مبلغ کل */
+.total-fee-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.total-fee-input {
+  width: 140px;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--surface-color);
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
 /* استایل‌های مودال مدال */
 .medal-modal-content {
   text-align: center;
@@ -1359,5 +1588,173 @@ const noteColumns = [
 }
 .btn-outline:hover {
   background-color: var(--background-color);
+}
+
+.payments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+.payments-header h4 {
+  margin: 0;
+}
+.payment-list {
+  list-style: none;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-left: 10px;
+}
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.payment-item:last-child {
+  border-bottom: none;
+}
+.payment-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.payment-icon {
+  font-size: 1.5rem;
+}
+.payment-icon.واریز {
+  color: var(--success-text);
+}
+.payment-icon.قسط {
+  color: var(--warning-text);
+}
+.payment-amount {
+  display: block;
+  font-weight: 500;
+}
+.payment-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.payment-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.status-badge.پرداخت-شده {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+.status-badge.سررسید-شده {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.status-badge.درآینده {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+.no-data {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 20px 0;
+}
+.summary-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: var(--background-color);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.success-text {
+  color: var(--success-text);
+}
+.error-text {
+  color: var(--danger-color);
+}
+.error-message {
+  color: var(--danger-color);
+  background-color: #fee2e2;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.installments-list {
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 5px;
+}
+.installment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.installment-row.locked {
+  opacity: 0.6;
+}
+.installment-row input {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--surface-color);
+}
+.installment-row input:disabled {
+  background-color: var(--background-color);
+}
+.status-tag {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  background: var(--background-color);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.btn-icon-only-sm {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-icon-only-sm.btn-danger {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: none;
+}
+.btn-icon-only-sm.btn-danger:hover:not(:disabled) {
+  background-color: var(--danger-color);
+  color: #fff;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+.modal-actions .spacer {
+  flex-grow: 1;
+}
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
 </style>

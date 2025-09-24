@@ -264,6 +264,7 @@
       "birthYear": 1375,
       "termId": "t74",
       "apollonyarId": "ap1",
+      "totalCourseFee": 5000000,
       "status": "آزاد",
       "studentType": "ترمی",
       "accessStatus": "فعال",
@@ -346,6 +347,7 @@
       "birthYear": 1379,
       "termId": "t78",
       "apollonyarId": "ap2",
+      "totalCourseFee": 5000000,
       "status": "مسدود",
       "studentType": "ترمی",
       "accessStatus": "غیرفعال (بدهی)",
@@ -406,6 +408,7 @@
       "birthYear": 1368,
       "termId": "t76",
       "apollonyarId": "ap3",
+      "totalCourseFee": 5000000,
       "status": "انصراف",
       "studentType": "ترمی",
       "accessStatus": "فعال",
@@ -465,6 +468,7 @@
       "birthYear": 1386,
       "termId": "t81",
       "apollonyarId": "ap4",
+      "totalCourseFee": 5000000,
       "status": "آزاد",
       "studentType": "خودخوان",
       "accessStatus": "فعال",
@@ -1527,13 +1531,13 @@
   "transactions": [
     {
       "id": "tr1",
+      "studentId": 201,
       "type": "واریز",
-      "amount": "2,500,000",
+      "amount": 2500000,
       "dateTime": "۱۴۰۴/۰۶/۰۱ - ۱۱:۳۰",
       "trackingNumber": "112233445",
-      "paymentMethod": "کارت به کارت",
+      "paymentMethod": "درگاه پرداخت",
       "status": "تأیید",
-      "receiptImageUrl": "https://img.freepik.com/premium-vector/receipt-template-collection-with-realistic-design_23-2147917745.jpg?semt=ais_incoming&w=740&q=80",
       "notes": [
         {
           "author": "علی رضایی",
@@ -1545,13 +1549,14 @@
     },
     {
       "id": "tr2",
-      "type": "برداشت",
-      "amount": "500,000",
+      "studentId": 201,
+      "type": "واریز",
+      "amount": 1250000,
       "dateTime": "۱۴۰۴/۰۶/۰۵ - ۱۶:۰۰",
       "trackingNumber": "223344556",
-      "paymentMethod": "پایا",
-      "status": "در انتظار",
-      "receiptImageUrl": null,
+      "paymentMethod": "کارت به کارت",
+      "status": "تأیید",
+      "receiptImageUrl": "https://img.freepik.com/premium-vector/receipt-template-collection-with-realistic-design_23-2147917745.jpg?semt=ais_incoming&w=740&q=80",
       "notes": [
         {
           "author": "سیستم",
@@ -1562,8 +1567,9 @@
     },
     {
       "id": "tr3",
+      "studentId": 202,
       "type": "واریز",
-      "amount": "1,250,000",
+      "amount": 5000000,
       "dateTime": "۱۴۰۴/۰۶/۰۸ - ۰۹:۱۲",
       "trackingNumber": "334455667",
       "paymentMethod": "درگاه پرداخت",
@@ -1580,7 +1586,7 @@
     {
       "id": "tr4",
       "type": "واریز",
-      "amount": "750,000",
+      "amount": 750000,
       "dateTime": "۱۴۰۴/۰۶/۱۲ - ۱۸:۴۵",
       "trackingNumber": "445566778",
       "paymentMethod": "کارت به کارت",
@@ -1599,7 +1605,7 @@
     {
       "id": "tr5",
       "type": "برداشت",
-      "amount": "1,000,000",
+      "amount": 1000000,
       "dateTime": "۱۴۰۴/۰۶/۱۵ - ۱۱:۰۰",
       "trackingNumber": "556677889",
       "paymentMethod": "پایا",
@@ -1616,7 +1622,7 @@
     {
       "id": "tr6",
       "type": "واریز",
-      "amount": "5,000,000",
+      "amount": 5000000,
       "dateTime": "۱۴۰۴/۰۶/۲۰ - ۱۳:۲۰",
       "trackingNumber": "667788990",
       "paymentMethod": "کارت به کارت",
@@ -1633,7 +1639,7 @@
     {
       "id": "tr7",
       "type": "واریز",
-      "amount": "800,000",
+      "amount": 800000,
       "dateTime": "۱۴۰۴/۰۷/۰۱ - ۱۰:۱۰",
       "trackingNumber": "778899001",
       "paymentMethod": "کارت به کارت",
@@ -1650,7 +1656,7 @@
     {
       "id": "tr8",
       "type": "واریز",
-      "amount": "950,000",
+      "amount": 950000,
       "dateTime": "۱۴۰۴/۰۷/۰۳ - ۱۴:۰۰",
       "trackingNumber": "889900112",
       "paymentMethod": "کارت به کارت",
@@ -1667,7 +1673,7 @@
     {
       "id": "tr9",
       "type": "برداشت",
-      "amount": "300,000",
+      "amount": 300000,
       "dateTime": "۱۴۰۴/۰۷/۰۵ - ۰۹:۳۰",
       "trackingNumber": "990011223",
       "paymentMethod": "پایا",
@@ -1684,7 +1690,7 @@
     {
       "id": "tr10",
       "type": "واریز",
-      "amount": "1,800,000",
+      "amount": 1800000,
       "dateTime": "۱۴۰۴/۰۷/۱۰ - ۱۷:۵۰",
       "trackingNumber": "102030405",
       "paymentMethod": "درگاه پرداخت",
@@ -1701,64 +1707,60 @@
   ],
   "installments": [
     {
-      "id": "in1",
-      "studentId": 202,
-      "dueDate": "۱۴۰۴/۰۷/۰۱",
-      "amount": "1,500,000",
-      "daysRemaining": -25,
-      "paymentStatus": "سررسید شده",
-      "lastContactDate": "۱۴۰۴/۰۶/۲۵"
-    },
-    {
-      "id": "in2",
-      "studentId": 204,
-      "dueDate": "۱۴۰۵/۰۲/۲۰",
-      "amount": "1,000,000",
-      "daysRemaining": 30,
-      "paymentStatus": "درآینده",
-      "lastContactDate": "۱۴۰۵/۰۱/۱۵"
-    },
-    {
-      "id": "in3",
+      "id": "in_s201_1",
       "studentId": 201,
-      "dueDate": "۱۴۰۴/۰۶/۱۵",
-      "amount": "2,500,000",
+      "dueDate": "۱۴۰۴/۰۶/۰۱",
+      "amount": 1250000,
       "daysRemaining": 0,
       "paymentStatus": "پرداخت شده",
-      "lastContactDate": "۱۴۰۴/۰۶/۱۰"
+      "transactionId": "tr1",
+      "lastContactDate": "۱۴۰۴/۰۵/۲۸"
     },
     {
-      "id": "in4",
-      "studentId": 205,
-      "dueDate": "۱۴۰۴/۰۹/۰۱",
-      "amount": "2,000,000",
-      "daysRemaining": -15,
+      "id": "in_s201_2",
+      "studentId": 201,
+      "dueDate": "۱۴۰۴/۰۶/۱۵",
+      "amount": 1250000,
+      "daysRemaining": 0,
+      "paymentStatus": "پرداخت شده",
+      "transactionId": "tr2",
+      "lastContactDate": "۱۴۰۴/۰۶/۱۴"
+    },
+    {
+      "id": "in_s201_3",
+      "studentId": 201,
+      "dueDate": "۱۴۰۴/۰۶/۳۰",
+      "amount": 1250000,
+      "daysRemaining": -3,
       "paymentStatus": "سررسید شده",
-      "lastContactDate": "۱۴۰۴/۰۸/۲۰"
+      "transactionId": null,
+      "lastContactDate": "۱۴۰۴/۰۶/۲۸"
     },
     {
-      "id": "in5",
-      "studentId": 207,
-      "dueDate": "۱۴۰۵/۰۱/۰۱",
-      "amount": "1,800,000",
-      "daysRemaining": 20,
+      "id": "in_s201_4",
+      "studentId": 201,
+      "dueDate": "۱۴۰۴/۰۷/۱۵",
+      "amount": 1250000,
+      "daysRemaining": 13,
       "paymentStatus": "درآینده",
-      "lastContactDate": "۱۴۰۴/۱۲/۱۵"
+      "transactionId": null,
+      "lastContactDate": "۱۴۰۴/۰۶/۲۸"
     },
     {
-      "id": "in6",
-      "studentId": 209,
-      "dueDate": "۱۴۰۵/۰۳/۱۵",
-      "amount": "1,500,000",
-      "daysRemaining": 45,
-      "paymentStatus": "درآینده",
-      "lastContactDate": "۱۴۰۵/۰۲/۰۱"
+      "id": "in_s202_1",
+      "studentId": 202,
+      "dueDate": "۱۴۰۴/۰۶/۰۵",
+      "amount": 5000000,
+      "daysRemaining": 0,
+      "paymentStatus": "پرداخت شده",
+      "transactionId": "tr3",
+      "lastContactDate": "۱۴۰۴/۰۶/۰۱"
     },
     {
       "id": "in7",
       "studentId": 213,
       "dueDate": "۱۴۰۴/۰۸/۱۰",
-      "amount": "2,200,000",
+      "amount": 2200000,
       "daysRemaining": 0,
       "paymentStatus": "پرداخت شده",
       "lastContactDate": "۱۴۰۴/۰۸/۰۵"
@@ -1767,7 +1769,7 @@
       "id": "in8",
       "studentId": 216,
       "dueDate": "۱۴۰۴/۱۲/۲۰",
-      "amount": "1,000,000",
+      "amount": 1000000,
       "daysRemaining": -5,
       "paymentStatus": "سررسید شده",
       "lastContactDate": "۱۴۰۴/۱۲/۱۰"
@@ -1776,7 +1778,7 @@
       "id": "in9",
       "studentId": 218,
       "dueDate": "۱۴۰۵/۰۱/۲۵",
-      "amount": "1,200,000",
+      "amount": 1200000,
       "daysRemaining": 10,
       "paymentStatus": "درآینده",
       "lastContactDate": "۱۴۰۵/۰۱/۱۰"
@@ -1785,7 +1787,7 @@
       "id": "in10",
       "studentId": 220,
       "dueDate": "۱۴۰۵/۰۴/۱۰",
-      "amount": "2,000,000",
+      "amount": 2000000,
       "daysRemaining": 60,
       "paymentStatus": "درآینده",
       "lastContactDate": "۱۴۰۵/۰۲/۲۰"
