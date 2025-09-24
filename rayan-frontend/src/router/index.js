@@ -11,16 +11,21 @@ import TransactionsView from '../views/TransactionsView.vue'
 import InstallmentTrackingView from '../views/InstallmentTrackingView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import StudentSelfProfileView from '../views/StudentSelfProfileView.vue'
-import LoginView from '../views/LoginView.vue' // جدید
+import LoginView from '../views/LoginView.vue'
+import RegistrationView from '../views/RegistrationView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      // مسیر جدید برای صفحه لاگین
       path: '/login',
       name: 'login',
       component: LoginView,
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: RegistrationView,
     },
     {
       path: '/my-profile/:id',
