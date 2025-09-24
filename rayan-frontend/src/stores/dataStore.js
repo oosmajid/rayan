@@ -47,7 +47,9 @@ export const useDataStore = defineStore('data', () => {
         courseId: course.id,
         apollonyar: apollonyar.name || '-',
         apollonyarTelegramId: apollonyar.telegramId || '-',
-        group: group.name || '-', // جدید
+        group: group.name || '-',
+        birthYear: student.birthYear,
+        city: student.city,
         assignmentStatus: generateAssignmentStatuses(),
         daysSinceLastContact: lastCall ? Math.floor(Math.random() * 10) + 1 : 30,
         accountStatus: student.status,

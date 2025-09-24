@@ -1,15 +1,15 @@
 <script setup>
-import StarRating from './StarRating.vue';
+import StarRating from './StarRating.vue'
 
 defineProps({
   submission: Object,
   templateFiles: Array,
-});
+  isReadOnly: { type: Boolean, default: false }, // پراپ جدید
+})
 
-// تابعی برای پیدا کردن فایل ارسالی مرتبط با یک الگو
 const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
-  return submittedFiles.find(file => file.templateId === templateId);
-};
+  return submittedFiles.find((file) => file.templateId === templateId)
+}
 </script>
 
 <template>
@@ -17,14 +17,14 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
     <div class="submission-header">
       <h4>نسخه ارسالی در تاریخ: {{ submission.date }}</h4>
     </div>
-    
+
     <div class="content-grid">
       <div class="grid-column">
         <h5>فایل‌های الگو</h5>
         <div class="files-container">
           <div v-for="template in templateFiles" :key="template.id" class="file-row">
             <a :href="template.url" target="_blank" class="file-preview">
-              <img :src="template.url" :alt="template.name">
+              <img :src="template.url" :alt="template.name" />
             </a>
           </div>
         </div>
@@ -35,8 +35,15 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
         <div class="files-container">
           <div v-for="template in templateFiles" :key="template.id" class="file-row">
             <template v-if="findSubmittedFileForTemplate(template.id, submission.submittedFiles)">
-              <a :href="findSubmittedFileForTemplate(template.id, submission.submittedFiles).url" target="_blank" class="file-preview">
-                <img :src="findSubmittedFileForTemplate(template.id, submission.submittedFiles).url" :alt="findSubmittedFileForTemplate(template.id, submission.submittedFiles).name">
+              <a
+                :href="findSubmittedFileForTemplate(template.id, submission.submittedFiles).url"
+                target="_blank"
+                class="file-preview"
+              >
+                <img
+                  :src="findSubmittedFileForTemplate(template.id, submission.submittedFiles).url"
+                  :alt="findSubmittedFileForTemplate(template.id, submission.submittedFiles).name"
+                />
               </a>
             </template>
             <div v-else class="no-submission">
@@ -50,12 +57,18 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
     <div class="submission-footer">
       <div class="evaluation-section">
         <div class="form-group">
-          <label :for="`feedback-${submission.version}`">یادداشت و توضیحات</label>
-          <textarea :id="`feedback-${submission.version}`" v-model="submission.feedback" rows="3" placeholder="توضیحات خود را اینجا بنویسید..."></textarea>
+          <label :for="`feedback-${submission.version}`">یادداشت و توضیحات آپولون‌یار</label>
+          <textarea
+            :id="`feedback-${submission.version}`"
+            :value="submission.feedback"
+            rows="3"
+            placeholder="توضیحی ثبت نشده است..."
+            :disabled="isReadOnly"
+          ></textarea>
         </div>
         <div class="rating-group">
           <label>امتیاز</label>
-          <StarRating v-model="submission.grade" />
+          <StarRating :model-value="submission.grade" :is-read-only="isReadOnly" />
         </div>
       </div>
     </div>
@@ -101,7 +114,8 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
 .form-group {
   flex-grow: 1;
 }
-.form-group label, .rating-group label {
+.form-group label,
+.rating-group label {
   display: block;
   margin-bottom: 8px;
   font-size: 0.9rem;
@@ -115,6 +129,12 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
   background-color: var(--surface-color);
   font-family: 'Vazirmatn', sans-serif;
   resize: vertical;
+}
+/* استایل برای حالت غیرفعال */
+.form-group textarea:disabled {
+  background-color: var(--background-color);
+  opacity: 0.8;
+  cursor: not-allowed;
 }
 .rating-group {
   display: flex;
@@ -147,7 +167,8 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
 }
 
 /* --- استایل نمایش فایل‌ها --- */
-.file-preview, .no-submission {
+.file-preview,
+.no-submission {
   width: 120px;
   height: 120px;
   border-radius: 12px;
