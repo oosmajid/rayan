@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
 
-// تمام کامپوننت‌های صفحات را import می‌کنیم
+// کامپوننت‌های صفحات
 import AllStudentsView from '../views/AllStudentsView.vue'
 import MyCallsView from '../views/MyCallsView.vue'
 import AssignmentsView from '../views/AssignmentsView.vue'
@@ -13,6 +13,8 @@ import DashboardView from '../views/DashboardView.vue'
 import StudentSelfProfileView from '../views/StudentSelfProfileView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegistrationView from '../views/RegistrationView.vue'
+import LandingView from '../views/LandingView.vue'
+import RedirectView from '../views/RedirectView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +28,16 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegistrationView,
+    },
+    {
+      path: '/course/photoshop', // می‌توانید این آدرس را به دلخواه تغییر دهید
+      name: 'course-landing',
+      component: LandingView,
+    },
+    {
+      path: '/redirecting',
+      name: 'redirecting',
+      component: RedirectView,
     },
     {
       path: '/my-profile/:id',
