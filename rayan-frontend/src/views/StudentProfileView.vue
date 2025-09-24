@@ -97,11 +97,17 @@ function submitStatusChange() {
 
 // --- Edit Profile Modal ---
 const isEditProfileModalOpen = ref(false)
+const editableProfile = ref(null) // ref جدید برای داده‌های قابل ویرایش
+
 function openEditProfileModal() {
+  // یک کپی از اطلاعات فعلی هنرجو ایجاد می‌کنیم تا تغییرات مستقیما اعمال نشود
+  editableProfile.value = JSON.parse(JSON.stringify(student.value))
   isEditProfileModalOpen.value = true
 }
+
 function submitProfileEdit() {
-  console.log('Profile Edited!')
+  // تابع جدیدی که در استور ساختیم را فراخوانی می‌کنیم
+  dataStore.updateStudentProfile(studentId, editableProfile.value)
   isEditProfileModalOpen.value = false
 }
 
@@ -291,8 +297,13 @@ const noteColumns = [
             <li>
               <i class="fa-solid fa-mobile-screen-button"></i> <span>{{ student.phone }}</span>
             </li>
-            <li><i class="fa-solid fa-cake-candles"></i> <span>متولد ۱۳۷۸</span></li>
-            <li><i class="fa-solid fa-location-dot"></i> <span>تهران</span></li>
+            <li>
+              <i class="fa-solid fa-cake-candles"></i>
+              <span>متولد {{ student.birthYear || 'نامشخص' }}</span>
+            </li>
+            <li>
+              <i class="fa-solid fa-location-dot"></i> <span>{{ student.city || 'نامشخص' }}</span>
+            </li>
           </ul>
           <div class="sidebar-actions">
             <button @click="openLogCallModal" class="btn">
@@ -748,34 +759,36 @@ const noteColumns = [
     </BaseModal>
     <BaseModal :show="isEditProfileModalOpen" @close="isEditProfileModalOpen = false">
       <template #header><h2>ویرایش مشخصات هنرجو</h2></template>
-      <div v-if="student">
-        <form @submit.prevent="submitProfileEdit" class="modal-form profile-edit-form">
-          <div class="form-group profile-image-editor">
-            <img src="https://picsum.photos/120/120" alt="عکس هنرجو" />
-            <label for="profile-image-upload" class="edit-photo-btn">
-              <i class="fa-solid fa-camera"></i>
-              <input type="file" id="profile-image-upload" hidden />
-            </label>
-          </div>
-          <div class="form-group">
-            <label for="profile-name">نام و نام خانوادگی</label>
-            <input type="text" id="profile-name" :value="student.name" />
-          </div>
-          <div class="form-group">
-            <label for="profile-phone">شماره تلفن</label>
-            <input type="tel" id="profile-phone" :value="student.phone" />
-          </div>
-          <div class="form-group">
-            <label for="profile-birth-year">سال تولد</label>
-            <input type="number" id="profile-birth-year" value="1378" />
-          </div>
-          <div class="form-group">
-            <label for="profile-city">شهر</label>
-            <input type="text" id="profile-city" value="تهران" />
-          </div>
-          <button type="submit" class="btn">ثبت تغییرات</button>
-        </form>
-      </div>
+      <form
+        v-if="editableProfile"
+        @submit.prevent="submitProfileEdit"
+        class="modal-form profile-edit-form"
+      >
+        <div class="form-group profile-image-editor">
+          <img src="https://picsum.photos/120/120" alt="عکس هنرجو" />
+          <label for="profile-image-upload" class="edit-photo-btn">
+            <i class="fa-solid fa-camera"></i>
+            <input type="file" id="profile-image-upload" hidden />
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="profile-name">نام و نام خانوادگی</label>
+          <input type="text" id="profile-name" v-model="editableProfile.name" />
+        </div>
+        <div class="form-group">
+          <label for="profile-phone">شماره تلفن</label>
+          <input type="tel" id="profile-phone" v-model="editableProfile.phone" />
+        </div>
+        <div class="form-group">
+          <label for="profile-birth-year">سال تولد</label>
+          <input type="number" id="profile-birth-year" v-model="editableProfile.birthYear" />
+        </div>
+        <div class="form-group">
+          <label for="profile-city">شهر</label>
+          <input type="text" id="profile-city" v-model="editableProfile.city" />
+        </div>
+        <button type="submit" class="btn">ثبت تغییرات</button>
+      </form>
     </BaseModal>
     <BaseModal :show="isEditDueDateModalOpen" @close="isEditDueDateModalOpen = false">
       <template #header><h2>ویرایش مهلت ارسال تکلیف</h2></template>

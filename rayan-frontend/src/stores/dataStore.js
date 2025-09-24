@@ -334,6 +334,16 @@ export const useDataStore = defineStore('data', () => {
     students.value.unshift(newStudent)
   }
 
+  function updateStudentProfile(studentId, profileData) {
+    const student = students.value.find((s) => s.id === studentId)
+    if (student) {
+      student.name = profileData.name
+      student.phone = profileData.phone
+      student.birthYear = profileData.birthYear
+      student.city = profileData.city
+    }
+  }
+
   return {
     students,
     apollonyars,
@@ -368,5 +378,6 @@ export const useDataStore = defineStore('data', () => {
     assignGroupToStudents,
     removeStudent,
     addStudent,
+    updateStudentProfile,
   }
 })
