@@ -87,6 +87,29 @@ const tableColumns = [
         </div>
         <span v-else>-</span>
       </template>
+
+      <template #cell-accountStatus="{ item }">
+        <span class="status-bubble" :class="`status-${item.accountStatus}`">{{
+          item.accountStatus
+        }}</span>
+      </template>
+      <template #cell-studentType="{ item }">
+        <span class="status-bubble type">{{ item.studentType }}</span>
+      </template>
+      <template #cell-enrollmentStatus="{ item }">
+        <span class="status-bubble presence">{{ item.enrollmentStatus }}</span>
+      </template>
+      <template #cell-accessStatus="{ item }">
+        <span
+          class="status-bubble"
+          :class="
+            item.accessStatus && item.accessStatus.includes('فعال')
+              ? 'access-active'
+              : 'access-inactive'
+          "
+          >{{ item.accessStatus }}</span
+        >
+      </template>
     </BaseTable>
   </div>
 
@@ -226,5 +249,40 @@ const tableColumns = [
 }
 .score-icon {
   color: var(--star-color);
+}
+
+/* --- تغییر جدید: استایل‌های حباب‌ها --- */
+.status-bubble {
+  padding: 6px 14px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.status-bubble.type {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+.status-bubble.status-آزاد {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+.status-bubble.status-انصراف {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+.status-bubble.status-مسدود {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.status-bubble.presence {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+.status-bubble.access-active {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+.status-bubble.access-inactive {
+  background-color: #ffedd5;
+  color: #9a3412;
 }
 </style>

@@ -27,6 +27,18 @@ const filterPopup = ref({
   searchTerm: '',
 })
 
+// --- تغییر جدید: منطق مربوط به "انتخاب همه" در فیلتر ---
+const isAllFilterOptionsSelected = computed(() => {
+  if (!filterPopup.value.options) return false
+  return filterPopup.value.options.every((opt) => opt.checked)
+})
+
+function toggleAllFilterOptions() {
+  const newValue = !isAllFilterOptionsSelected.value
+  filterPopup.value.options.forEach((opt) => (opt.checked = newValue))
+}
+// --- پایان تغییر جدید ---
+
 function getUniqueValues(columnKey) {
   const values = props.data.map((item) => item[columnKey])
   return [...new Set(values)].sort()
@@ -269,6 +281,15 @@ function toggleSelectAll() {
           class="popup-search"
         />
         <div class="options-list">
+          <div class="option-item select-all-item">
+            <input
+              type="checkbox"
+              id="select-all-filter"
+              :checked="isAllFilterOptionsSelected"
+              @change="toggleAllFilterOptions"
+            />
+            <label for="select-all-filter">انتخاب همه</label>
+          </div>
           <div v-for="option in filteredPopupOptions" :key="option.value" class="option-item">
             <input type="checkbox" v-model="option.checked" :id="`opt-${option.value}`" />
             <label :for="`opt-${option.value}`">{{ option.value }}</label>
@@ -413,6 +434,13 @@ tbody tr:hover {
 }
 .option-item input {
   margin-left: 8px;
+}
+/* تغییر جدید: استایل برای آیتم "انتخاب همه" */
+.select-all-item {
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 5px;
+  margin-bottom: 5px;
 }
 .btn-apply-filter {
   width: 100%;
