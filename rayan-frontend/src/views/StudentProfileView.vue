@@ -1653,6 +1653,7 @@ const noteColumns = [
 .modal-actions .btn,
 .modal-actions .btn-outline {
   width: auto;
+  min-width: 100px;
 }
 .btn-danger {
   background-color: var(--danger-color);

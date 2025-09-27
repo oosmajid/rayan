@@ -36,6 +36,11 @@ const alertInfo = computed(() => {
 
 const studentId = parseInt(route.params.id)
 const student = computed(() => dataStore.getStudentById(studentId))
+
+const paymentHistory = computed(() => {
+  return dataStore.getPaymentsForStudent(studentId)
+})
+
 const course = computed(() => {
   if (!student.value) return null
   return dataStore.courses.find((c) => c.id === student.value.courseId)
@@ -142,6 +147,30 @@ onMounted(() => {
               <i class="fa-solid fa-location-dot"></i> <span>{{ student.city || 'نامشخص' }}</span>
             </li>
           </ul>
+        </div>
+        <div class="payments-card card">
+          <div class="payments-header">
+            <h4>وضعیت پرداخت‌ها</h4>
+          </div>
+          <ul v-if="paymentHistory.length" class="payment-list">
+            <li v-for="payment in paymentHistory" :key="payment.id" class="payment-item">
+              <div class="payment-info">
+                <i class="fa-solid fa-wallet payment-icon" :class="payment.type"></i>
+                <div>
+                  <span class="payment-amount"
+                    >{{ Number(payment.amount).toLocaleString('fa-IR') }} تومان</span
+                  >
+                  <small class="payment-date">{{ payment.date }} - {{ payment.method }}</small>
+                </div>
+              </div>
+              <div class="payment-status">
+                <span class="status-badge" :class="payment.status.replace(' ', '-')">{{
+                  payment.status
+                }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-data">سابقه‌ای یافت نشد.</p>
         </div>
       </aside>
 
@@ -696,5 +725,80 @@ onMounted(() => {
   background-color: #451b1b;
   color: #fca5a5; /* red-300 */
   border-color: #7f1d1d;
+}
+/* --- استایل‌های بخش پرداخت‌ها --- */
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+.payments-card {
+  text-align: right;
+}
+.payments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+.payments-header h4 {
+  margin: 0;
+}
+.payment-list {
+  list-style: none;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-left: 10px;
+}
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.payment-item:last-child {
+  border-bottom: none;
+}
+.payment-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.payment-icon {
+  font-size: 1.5rem;
+}
+.payment-icon.واریز {
+  color: var(--success-text);
+}
+.payment-icon.قسط {
+  color: var(--warning-text);
+}
+.payment-amount {
+  display: block;
+  font-weight: 500;
+}
+.payment-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.status-badge.پرداخت-شده {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+.status-badge.سررسید-شده {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.status-badge.درآینده {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+.no-data {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 20px 0;
 }
 </style>
