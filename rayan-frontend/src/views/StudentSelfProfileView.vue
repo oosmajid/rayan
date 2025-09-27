@@ -46,6 +46,10 @@ const course = computed(() => {
   return dataStore.courses.find((c) => c.id === student.value.courseId)
 })
 
+// متغیرهای جدید برای مودال آپلود تکلیف
+const newSubmissionFiles = ref({}) // آبجکتی برای نگهداری فایل‌ها به ازای هر الگو
+const newSubmissionNotes = ref('') // متغیری برای یادداشت هنرجو
+
 // --- Medal Details Modal ---
 const isMedalModalOpen = ref(false)
 const selectedMedal = ref(null)
@@ -87,12 +91,30 @@ function openAssignmentViewModal(assignment) {
 // برای باز کردن مودال آپلود
 function openAssignmentUploadModal(assignment) {
   selectedAssignment.value = assignment
+  newSubmissionFiles.value = {} // پاک کردن فایل‌های قبلی
+  newSubmissionNotes.value = '' // پاک کردن یادداشت قبلی
   isAssignmentUploadModalOpen.value = true
 }
 
 function handleUpload() {
-  console.log('Assignment Submitted!')
+  console.log('Assignment Submitted with data:', {
+    assignmentId: selectedAssignment.value.id,
+    files: newSubmissionFiles.value,
+    notes: newSubmissionNotes.value,
+  })
+  alert('تکلیف شما با موفقیت ارسال شد. (شبیه‌سازی)')
   isAssignmentUploadModalOpen.value = false
+}
+
+function handleFileSelect(event, templateId) {
+  const file = event.target.files[0]
+  if (file) {
+    newSubmissionFiles.value[templateId] = {
+      file: file,
+      name: file.name,
+      previewUrl: URL.createObjectURL(file), // ایجاد پیش‌نمایش موقت
+    }
+  }
 }
 
 const progressPercent = computed(() => {
@@ -366,19 +388,66 @@ onMounted(() => {
     <BaseModal
       :show="isAssignmentUploadModalOpen"
       @close="isAssignmentUploadModalOpen = false"
-      size="md"
+      size="lg"
     >
-      <template #header
-        ><h2>ارسال تکلیف: {{ selectedAssignment?.title }}</h2></template
-      >
+      <template #header>
+        <h2>ارسال تکلیف: {{ selectedAssignment?.title }}</h2>
+      </template>
       <div v-if="selectedAssignment" class="upload-modal-content">
-        <p>
-          فایل‌های تکلیف خود را در کادر زیر بکشید و رها کنید یا روی آن کلیک کنید تا انتخاب شوند.
-        </p>
-        <div class="dropzone">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span>برای آپلود کلیک کنید</span>
+        <div class="upload-grid">
+          <div class="upload-column">
+            <h5>فایل‌های الگو (برای دانلود)</h5>
+            <div
+              v-for="template in selectedAssignment.templateFiles"
+              :key="template.id"
+              class="template-file-row"
+            >
+              <a :href="template.url" target="_blank" class="template-preview">
+                <img :src="template.url" :alt="template.name" />
+                <span>{{ template.name }}</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="upload-column">
+            <h5>فایل‌های ارسالی شما</h5>
+            <div
+              v-for="template in selectedAssignment.templateFiles"
+              :key="template.id"
+              class="upload-file-row"
+            >
+              <div class="upload-preview">
+                <img
+                  v-if="newSubmissionFiles[template.id]"
+                  :src="newSubmissionFiles[template.id].previewUrl"
+                  alt="Preview"
+                />
+                <i v-else class="fa-solid fa-file-image"></i>
+              </div>
+              <label :for="`file-input-${template.id}`" class="btn-sm btn-outline">
+                <i class="fa-solid fa-upload"></i>
+                <span>{{ newSubmissionFiles[template.id] ? 'تغییر فایل' : 'انتخاب فایل' }}</span>
+              </label>
+              <input
+                :id="`file-input-${template.id}`"
+                type="file"
+                @change="handleFileSelect($event, template.id)"
+                hidden
+              />
+            </div>
+          </div>
         </div>
+
+        <div class="notes-section">
+          <label for="student-notes">توضیحات و یادداشت شما (اختیاری)</label>
+          <textarea
+            id="student-notes"
+            v-model="newSubmissionNotes"
+            rows="3"
+            placeholder="اگر نکته‌ای برای آپولون‌یار خود دارید، اینجا بنویسید..."
+          ></textarea>
+        </div>
+
         <div class="modal-actions">
           <button
             @click="isAssignmentUploadModalOpen = false"
@@ -387,7 +456,7 @@ onMounted(() => {
           >
             انصراف
           </button>
-          <button @click="handleUpload" type="button" class="btn">ارسال</button>
+          <button @click="handleUpload" type="button" class="btn">ارسال نهایی تکلیف</button>
         </div>
       </div>
     </BaseModal>
@@ -800,5 +869,84 @@ onMounted(() => {
   color: var(--text-secondary);
   text-align: center;
   padding: 20px 0;
+}
+/* --- استایل‌های جدید مودال آپلود --- */
+.upload-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+.upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 20px;
+}
+.upload-column h5 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.template-file-row,
+.upload-file-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  min-height: 80px;
+}
+.template-file-row:hover {
+  background-color: var(--background-color);
+}
+.template-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.template-preview img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+.upload-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  border: 1px dashed var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-color);
+}
+.upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.upload-preview i {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+}
+.notes-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.notes-section textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+  font-family: 'Vazirmatn', sans-serif;
+  resize: vertical;
 }
 </style>
