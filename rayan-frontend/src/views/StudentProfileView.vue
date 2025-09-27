@@ -23,6 +23,72 @@ const router = useRouter()
 const studentId = parseInt(route.params.id)
 const student = computed(() => dataStore.getStudentById(studentId))
 
+// متغیر برای نگهداری ترم انتخاب‌شده فعلی
+const selectedTermId = ref(null)
+// متغیرهای مودال تایید حذف دوره
+const isDeleteCourseModalOpen = ref(false)
+const courseToRemove = ref(null)
+
+// --- منطق مدیریت دوره‌ها ---
+const isAddCourseModalOpen = ref(false)
+const newEnrollment = ref({ courseId: '', termId: '' })
+
+// لیست دوره‌هایی که هنرجو هنوز در آن‌ها ثبت‌نام نکرده
+const availableCourses = computed(() => {
+  const enrolledCourseIds = student.value.enrolledCourses.map((ec) => ec.courseId)
+  return dataStore.courses.filter((c) => !enrolledCourseIds.includes(c.id))
+})
+
+// لیست ترم‌های مربوط به دوره انتخاب شده در مودال
+const availableTerms = computed(() => {
+  if (!newEnrollment.value.courseId) return []
+  return dataStore.terms.filter((t) => t.courseId === newEnrollment.value.courseId)
+})
+
+function openAddCourseModal() {
+  newEnrollment.value = { courseId: '', termId: '' }
+  isAddCourseModalOpen.value = true
+}
+
+function handleAddCourse() {
+  if (newEnrollment.value.courseId && newEnrollment.value.termId) {
+    dataStore.addCourseToStudent(
+      studentId,
+      newEnrollment.value.courseId,
+      newEnrollment.value.termId,
+    )
+    isAddCourseModalOpen.value = false
+  } else {
+    alert('لطفاً هم دوره و هم ترم را انتخاب کنید.')
+  }
+}
+
+function selectCourse(enrolledCourse) {
+  selectedTermId.value = enrolledCourse.termId
+}
+
+function openDeleteCourseModal(enrolledCourse) {
+  courseToRemove.value = enrolledCourse
+  isDeleteCourseModalOpen.value = true
+}
+
+function confirmRemoveCourse() {
+  if (!courseToRemove.value) return
+
+  dataStore.removeCourseFromStudent(studentId, courseToRemove.value.courseId)
+
+  // اگر دوره حذف شده، دوره فعال بود، اولین دوره دیگر را فعال کن
+  if (selectedTermId.value === courseToRemove.value.termId) {
+    const remainingCourses = student.value.enrolledCourses.filter(
+      (c) => c.courseId !== courseToRemove.value.courseId,
+    )
+    selectedTermId.value = remainingCourses.length > 0 ? remainingCourses[0].termId : null
+  }
+
+  isDeleteCourseModalOpen.value = false
+  courseToRemove.value = null
+}
+
 // --- منطق بخش پرداخت‌ها و ویرایش اقساط ---
 const paymentHistory = computed(() => {
   return dataStore.getPaymentsForStudent(studentId)
@@ -341,16 +407,26 @@ const studentCalls = computed(() => {
   return dataStore.getCallsForStudentProfile(studentId, course.value.id)
 })
 const course = computed(() => {
-  if (!student.value) return null
-  return dataStore.courses.find((c) => c.id === student.value.courseId)
+  if (!student.value || !selectedTermId.value) return null
+  const selectedEnrollment = student.value.enrolledCourses.find(
+    (e) => e.termId === selectedTermId.value,
+  )
+  if (!selectedEnrollment) return null
+  return dataStore.courses.find((c) => c.id === selectedEnrollment.courseId)
 })
 const studentAssignments = computed(() => {
-  if (!student.value) return []
-  return dataStore.getAssignmentsForStudentProfile(studentId, student.value.courseId)
+  if (!student.value || !course.value) return []
+  return dataStore.getAssignmentsForStudentProfile(studentId, course.value.id)
 })
 watchEffect(() => {
   if (student.value) {
     layoutStore.setPageTitle(`پروفایل: ${student.value.name}`)
+    // انتخاب اولین دوره به عنوان پیش‌فرض
+    if (student.value.enrolledCourses && student.value.enrolledCourses.length > 0) {
+      if (!selectedTermId.value) {
+        selectedTermId.value = student.value.enrolledCourses[0].termId
+      }
+    }
   }
 })
 function goBack() {
@@ -468,11 +544,38 @@ const noteColumns = [
         </div>
       </aside>
       <main class="profile-main">
-        <div class="course-selector card">
-          <label for="course-select">نمایش اطلاعات برای دوره:</label>
-          <select id="course-select">
-            <option :value="student.course">{{ student.course }}</option>
-          </select>
+        <div class="card">
+          <div class="card-header">
+            <h4>دوره‌های هنرجو</h4>
+            <button @click="openAddCourseModal" class="btn-sm">
+              <i class="fa-solid fa-plus"></i> افزودن دوره
+            </button>
+          </div>
+
+          <ul v-if="student.enrolledCourses && student.enrolledCourses.length" class="courses-list">
+            <li
+              v-for="enrolledCourse in student.enrolledCourses"
+              :key="enrolledCourse.courseId"
+              class="course-item"
+              :class="{ active: enrolledCourse.termId === selectedTermId }"
+              @click="selectCourse(enrolledCourse)"
+            >
+              <div class="course-info">
+                <span class="course-name">{{ enrolledCourse.courseName }}</span>
+                <small class="term-name">{{ enrolledCourse.termName }}</small>
+              </div>
+              <div class="course-actions">
+                <button
+                  @click.stop="openDeleteCourseModal(enrolledCourse)"
+                  class="btn-sm btn-icon-only btn-danger"
+                  title="حذف دوره"
+                >
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-data">هنرجو در هیچ دوره‌ای ثبت‌نام نشده است.</p>
         </div>
         <div class="stats-grid-container">
           <div class="stat-card card">
@@ -688,6 +791,50 @@ const noteColumns = [
               </button>
             </template>
           </BaseTable>
+          <BaseModal :show="isAddCourseModalOpen" @close="isAddCourseModalOpen = false">
+            <template #header><h2>افزودن هنرجو به دوره جدید</h2></template>
+            <form @submit.prevent="handleAddCourse" class="modal-form">
+              <div class="form-group">
+                <label for="course-select-modal">دوره را انتخاب کنید</label>
+                <select id="course-select-modal" v-model="newEnrollment.courseId" required>
+                  <option disabled value="">یک دوره انتخاب کنید...</option>
+                  <option v-for="course in availableCourses" :key="course.id" :value="course.id">
+                    {{ course.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="term-select-modal">ترم مربوطه را انتخاب کنید</label>
+                <select
+                  id="term-select-modal"
+                  v-model="newEnrollment.termId"
+                  :disabled="!newEnrollment.courseId"
+                  required
+                >
+                  <option disabled value="">یک ترم انتخاب کنید...</option>
+                  <option v-for="term in availableTerms" :key="term.id" :value="term.id">
+                    {{ term.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="modal-actions">
+                <button @click="isAddCourseModalOpen = false" type="button" class="btn-outline">
+                  انصراف
+                </button>
+                <button type="submit" class="btn">افزودن</button>
+              </div>
+            </form>
+          </BaseModal>
+          <BaseModal :show="isDeleteCourseModalOpen" @close="isDeleteCourseModalOpen = false">
+            <template #header><h2>تأیید حذف دوره</h2></template>
+            <p v-if="courseToRemove">
+              آیا از حذف دوره «{{ courseToRemove.courseName }}» برای این هنرجو اطمینان دارید؟
+            </p>
+            <div class="modal-actions">
+              <button @click="isDeleteCourseModalOpen = false" class="btn-outline">انصراف</button>
+              <button @click="confirmRemoveCourse" class="btn btn-danger">بله، حذف کن</button>
+            </div>
+          </BaseModal>
         </div>
       </main>
     </div>
@@ -1991,5 +2138,87 @@ const noteColumns = [
 .payment-details .disabled-btn:hover {
   background-color: var(--border-color);
   color: var(--text-secondary);
+}
+/* --- استایل‌های کارت مدیریت دوره‌ها --- */
+.courses-management-card .courses-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 5px;
+}
+.courses-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--background-color);
+  padding: 12px 15px;
+  border-radius: 8px;
+}
+.course-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.course-name {
+  font-weight: 500;
+}
+.term-name {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+/* --- استایل‌های جدید کارت دوره‌ها --- */
+.courses-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 5px;
+}
+.course-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--background-color);
+  padding: 12px 15px;
+  border-radius: 8px;
+  border-right: 4px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+.course-item.active {
+  border-right-color: var(--primary-color);
+  background-color: #e9e7f8;
+}
+[data-theme='dark'] .course-item.active {
+  background-color: #2a2c4e;
+}
+.course-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.course-name {
+  font-weight: 500;
+}
+.term-name {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.course-actions {
+  display: flex;
+  align-items: center;
+}
+.no-data {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px 0;
+}
+/* --- استایل آیتم‌های قابل کلیک دوره --- */
+.course-item {
+  cursor: pointer;
 }
 </style>

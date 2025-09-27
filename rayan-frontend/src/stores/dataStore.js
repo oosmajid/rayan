@@ -32,11 +32,26 @@ export const useDataStore = defineStore('data', () => {
 
   const studentsWithDetails = computed(() => {
     return students.value.map((student) => {
-      const term = termsById.value.get(student.termId) || {}
+      // اولین ثبت‌نام را به عنوان مرجع اصلی در نظر می‌گیریم
+      const primaryEnrollment =
+        student.enrollments && student.enrollments[0] ? student.enrollments[0] : {}
+      const term = termsById.value.get(primaryEnrollment.termId) || {}
       const course = coursesById.value.get(term.courseId) || {}
       const apollonyar = apollonyarsById.value.get(student.apollonyarId) || {}
-      const group = groupsById.value.get(student.groupId) || {} // جدید
+      const group = groupsById.value.get(student.groupId) || {}
       const lastCall = calls.value.filter((c) => c.studentId === student.id).pop()
+
+      // لیست کامل دوره‌های ثبت‌نام شده
+      const enrolledCourses = (student.enrollments || []).map((e) => {
+        const termInfo = termsById.value.get(e.termId) || {}
+        const courseInfo = coursesById.value.get(termInfo.courseId) || {}
+        return {
+          courseId: courseInfo.id,
+          courseName: courseInfo.name || '-',
+          termId: termInfo.id,
+          termName: termInfo.name || '-',
+        }
+      })
 
       return {
         ...student,
@@ -53,6 +68,7 @@ export const useDataStore = defineStore('data', () => {
         assignmentStatus: generateAssignmentStatuses(),
         daysSinceLastContact: lastCall ? Math.floor(Math.random() * 10) + 1 : 30,
         accountStatus: student.status,
+        enrolledCourses: enrolledCourses, // لیست کامل دوره‌ها
       }
     })
   })
@@ -114,7 +130,9 @@ export const useDataStore = defineStore('data', () => {
   const coursesForTable = computed(() => {
     return courses.value.map((course) => {
       const courseTerms = terms.value.filter((t) => t.courseId === course.id).map((t) => t.id)
-      const courseStudents = students.value.filter((s) => courseTerms.includes(s.termId))
+      const courseStudents = students.value.filter(
+        (s) => s.enrollments && s.enrollments.some((e) => courseTerms.includes(e.termId)),
+      )
       const courseStudentIds = courseStudents.map((s) => s.id)
       const totalStudents = courseStudents.length
       const graduates = courseStudents.filter((s) => s.enrollmentStatus === 'فارغ‌التحصیل').length
@@ -129,7 +147,9 @@ export const useDataStore = defineStore('data', () => {
   const termsForTable = computed(() => {
     return terms.value.map((term) => {
       const course = coursesById.value.get(term.courseId) || {}
-      const studentsCount = students.value.filter((s) => s.termId === term.id).length
+      const studentsCount = students.value.filter(
+        (s) => s.enrollments && s.enrollments.some((e) => e.termId === term.id),
+      ).length
       return { ...term, course: course.name || '-', studentsCount }
     })
   })
@@ -388,6 +408,30 @@ export const useDataStore = defineStore('data', () => {
     installments.value.push(...unpaidNewInstallments)
   }
 
+  function addCourseToStudent(studentId, courseId, termId) {
+    const student = students.value.find((s) => s.id === studentId)
+    if (student) {
+      if (!student.enrollments) {
+        student.enrollments = []
+      }
+      // جلوگیری از ثبت دوره تکراری
+      const exists = student.enrollments.some((e) => e.courseId === courseId)
+      if (!exists) {
+        student.enrollments.push({ courseId, termId })
+      }
+    }
+  }
+
+  function removeCourseFromStudent(studentId, courseId) {
+    const student = students.value.find((s) => s.id === studentId)
+    if (student && student.enrollments) {
+      const index = student.enrollments.findIndex((e) => e.courseId === courseId)
+      if (index > -1) {
+        student.enrollments.splice(index, 1)
+      }
+    }
+  }
+
   return {
     students,
     apollonyars,
@@ -425,5 +469,7 @@ export const useDataStore = defineStore('data', () => {
     updateStudentProfile,
     getPaymentsForStudent,
     updateStudentInstallments,
+    addCourseToStudent,
+    removeCourseFromStudent,
   }
 })
