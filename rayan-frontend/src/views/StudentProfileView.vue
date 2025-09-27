@@ -39,12 +39,31 @@ const totalPaid = computed(() => {
     .reduce((sum, i) => sum + (Number(String(i.amount).replace(/,/g, '')) || 0), 0)
 })
 
+function getReceiptUrl(transactionId) {
+  if (!transactionId) return '#'
+  const transaction = dataStore.transactions.find((t) => t.id === transactionId)
+  return transaction ? transaction.receiptImageUrl : '#'
+}
+
 const totalInstallmentsAmount = computed(() => {
   if (!editableInstallments.value) return 0
-  return editableInstallments.value.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
+  return editableInstallments.value.reduce((sum, i) => {
+    // فقط اقساطی که عودت نشده‌اند را جمع بزن
+    if (i.paymentStatus !== 'عودت شده') {
+      return sum + (Number(i.amount) || 0)
+    }
+    return sum
+  }, 0)
 })
 
-// src/views/StudentProfileView.vue
+function handleStatusChange(installment, newStatus) {
+  if (installment.paymentStatus === newStatus) {
+    // اگر کاربر روی چک‌باکس فعال کلیک کرد، آن را غیرفعال کن
+    installment.paymentStatus = 'درآینده'
+  } else {
+    installment.paymentStatus = newStatus
+  }
+}
 
 function openEditInstallmentsModal() {
   // کپی عمیق از اقساط برای ویرایش
@@ -985,34 +1004,103 @@ const noteColumns = [
 
         <p v-if="validationError" class="error-message">{{ validationError }}</p>
 
+        <div class="installments-list-header">
+          <span>تاریخ سررسید</span>
+          <span>مبلغ</span>
+          <span>وضعیت</span>
+        </div>
         <div class="installments-list">
           <div
             v-for="(installment, index) in editableInstallments"
             :key="installment.id"
-            class="installment-row"
-            :class="{ locked: installment.transactionId }"
+            class="installment-item"
+            :class="{ locked: !!installment.transactionId }"
           >
-            <input
-              type="date"
-              v-model="installment.dueDate"
-              :disabled="installment.transactionId"
-              class="native-date-picker"
-            />
-            <input
-              type="number"
-              v-model="installment.amount"
-              :disabled="installment.transactionId"
-              placeholder="مبلغ (تومان)"
-            />
-            <span class="status-tag">{{ installment.paymentStatus }}</span>
-            <button
-              @click="removeInstallment(index)"
-              class="btn-icon-only-sm btn-danger"
-              :disabled="installment.transactionId"
-              title="حذف قسط"
+            <div class="installment-row">
+              <input
+                type="date"
+                v-model="installment.dueDate"
+                :disabled="!!installment.transactionId"
+                class="native-date-picker"
+              />
+              <input
+                type="number"
+                v-model="installment.amount"
+                :disabled="!!installment.transactionId"
+                placeholder="مبلغ (تومان)"
+              />
+              <div class="status-checkboxes">
+                <label title="پرداخت شده">
+                  <input
+                    type="checkbox"
+                    :checked="installment.paymentStatus === 'پرداخت شده'"
+                    @change="handleStatusChange(installment, 'پرداخت شده')"
+                    :disabled="!!installment.transactionId"
+                  />
+                  <i class="fa-solid fa-check"></i>
+                  <span>پرداخت</span>
+                </label>
+                <label title="عودت شده">
+                  <input
+                    type="checkbox"
+                    :checked="installment.paymentStatus === 'عودت شده'"
+                    @change="handleStatusChange(installment, 'عودت شده')"
+                    :disabled="!!installment.transactionId"
+                  />
+                  <i class="fa-solid fa-rotate-left"></i>
+                  <span>عودت</span>
+                </label>
+              </div>
+              <button
+                @click="removeInstallment(index)"
+                class="btn-icon-only-sm btn-danger"
+                :disabled="!!installment.transactionId"
+                title="حذف قسط"
+              >
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+            <div
+              v-if="
+                installment.paymentStatus === 'پرداخت شده' ||
+                installment.paymentStatus === 'عودت شده'
+              "
+              class="payment-details"
             >
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
+              <input
+                type="text"
+                placeholder="شماره پیگیری"
+                :disabled="!!installment.transactionId"
+              />
+              <input
+                type="date"
+                class="native-date-picker"
+                :disabled="!!installment.transactionId"
+              />
+              <input
+                type="time"
+                class="native-date-picker"
+                :disabled="!!installment.transactionId"
+              />
+
+              <template v-if="installment.transactionId">
+                <a
+                  :href="getReceiptUrl(installment.transactionId)"
+                  target="_blank"
+                  class="btn-sm btn-outline"
+                  title="مشاهده رسید"
+                >
+                  <i class="fa-solid fa-eye"></i> رسید
+                </a>
+              </template>
+              <template v-else>
+                <label class="btn-sm btn-outline">
+                  <i class="fa-solid fa-paperclip"></i> رسید
+                  <input type="file" hidden />
+                </label>
+              </template>
+            </div>
           </div>
         </div>
 
@@ -1756,5 +1844,151 @@ const noteColumns = [
   display: flex;
   flex-direction: column;
   gap: 25px;
+}
+
+/* --- استایل‌های جدید برای مودال اقساط --- */
+.installments-list-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 120px auto;
+  gap: 15px;
+  padding: 0 10px 8px 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.installments-list-header span:nth-child(3) {
+  text-align: center;
+}
+
+.installment-item {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  transition: background-color 0.2s;
+}
+.installment-item:hover {
+  background-color: var(--background-color);
+}
+.installment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 120px auto;
+  gap: 15px;
+  align-items: center;
+}
+
+.status-checkboxes {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.status-checkboxes label {
+  cursor: pointer;
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.status-checkboxes input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  visibility: hidden;
+}
+.status-checkboxes i {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  padding: 8px;
+  border-radius: 50%;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.status-checkboxes input:checked + i {
+  color: #fff;
+}
+/* رنگ برای پرداخت شده */
+.status-checkboxes label:first-child input:checked + i {
+  background-color: var(--success-text);
+}
+/* رنگ برای عودت شده */
+.status-checkboxes label:last-child input:checked + i {
+  background-color: var(--danger-color);
+}
+
+.payment-details {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr auto;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-color);
+}
+.payment-details input {
+  padding: 8px;
+  font-size: 0.9rem;
+  background-color: var(--background-color);
+}
+.payment-details .btn-sm {
+  height: auto;
+}
+.payment-details .btn-sm:hover {
+  height: auto;
+  background-color: var(--border-color);
+}
+/* --- استایل‌های تکمیلی برای مودال اقساط --- */
+
+/* استایل ردیف قفل شده (پرداخت شده) */
+.installment-item.locked {
+  background-color: var(--background-color);
+}
+.installment-item.locked .installment-row input,
+.installment-item.locked .installment-row button,
+.installment-item.locked .payment-details input {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none; /* غیرفعال کردن کلیک */
+}
+/* دکمه مشاهده رسید را فعال نگه می‌داریم */
+.installment-item.locked .payment-details a.btn-sm {
+  opacity: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.installment-item.locked input,
+.installment-item.locked button {
+  cursor: not-allowed !important;
+}
+
+/* استایل متن چک‌باکس‌ها */
+.status-checkboxes label {
+  flex-direction: column; /* چیدمان عمودی آیکون و متن */
+  gap: 2px;
+}
+.status-checkboxes span {
+  font-size: 9px;
+  font-weight: 300;
+  color: var(--text-secondary);
+}
+.status-checkboxes input:checked + i + span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* استایل دکمه رسید غیرفعال */
+.payment-details .disabled-btn {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+.payment-details .disabled-btn:hover {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
 }
 </style>

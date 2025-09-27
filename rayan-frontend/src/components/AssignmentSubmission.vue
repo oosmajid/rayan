@@ -60,7 +60,7 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
           <label :for="`feedback-${submission.version}`">یادداشت و توضیحات آپولون‌یار</label>
           <textarea
             :id="`feedback-${submission.version}`"
-            :value="submission.feedback"
+            v-model="submission.feedback"
             rows="3"
             placeholder="توضیحی ثبت نشده است..."
             :disabled="isReadOnly"
@@ -68,7 +68,7 @@ const findSubmittedFileForTemplate = (templateId, submittedFiles) => {
         </div>
         <div class="rating-group">
           <label>امتیاز</label>
-          <StarRating :model-value="submission.grade" :is-read-only="isReadOnly" />
+          <StarRating v-model="submission.grade" :is-read-only="isReadOnly" />
         </div>
       </div>
     </div>
