@@ -80,6 +80,13 @@ const tableColumns = [
       <template #cell-hearts="{ item }">
         <HeartRating :count="item.hearts" />
       </template>
+      <template #cell-score="{ item }">
+        <div v-if="item.score" class="score-cell">
+          <span>{{ item.score }}</span>
+          <i class="fa-solid fa-star score-icon"></i>
+        </div>
+        <span v-else>-</span>
+      </template>
     </BaseTable>
   </div>
 
@@ -211,5 +218,13 @@ const tableColumns = [
   left: 50%;
   transform: translate(-50%, -50%);
   line-height: 1;
+}
+.score-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.score-icon {
+  color: var(--star-color);
 }
 </style>
