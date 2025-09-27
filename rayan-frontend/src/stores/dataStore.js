@@ -56,6 +56,7 @@ export const useDataStore = defineStore('data', () => {
       return {
         ...student,
         term: term.name || '-',
+        termId: term.id,
         termStartDate: term.startDate,
         termEndDate: term.endDate,
         course: course.name || '-',
